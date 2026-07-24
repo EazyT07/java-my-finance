@@ -15,6 +15,9 @@ public class Main extends Application{
 
     private Stage primaryStage;
     private Label currentDbLabel;
+    private StackPane contentArea;
+    private CategoryView categoryView;
+    private VBox dashboardView;
 
     @Override
     public void start(Stage primaryStage) {
@@ -23,8 +26,30 @@ public class Main extends Application{
 
         // Init the default DB
         DatabaseManager.initializeDatabase();
-        // Build Navigation Bar
+
+        // Build Sub-Views
+        categoryView = new CategoryView();
+        dashboardView = createDashboardView();
+
+        // Setup Content Area Container
+        contentArea = new StackPane();
+        contentArea.getChildren().add(dashboardView);
+
+        // Build Layout
         VBox sidebar = createSidebar();
+        BorderPane root = new BorderPane();
+        root.setLeft(sidebar);
+        root.setCenter(contentArea);
+
+        // Set scene
+        Scene scene = new Scene(root, 1000, 750);
+        primaryStage.setTitle("Meine Finanzen");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+    }
+
+    private VBox createDashboardView() {
         // Welcome Label and DB Label
         Label welcomeLabel = new Label("Welcome");
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
@@ -34,15 +59,7 @@ public class Main extends Application{
         VBox contentArea = new VBox(15, welcomeLabel, currentDbLabel);
         contentArea.setAlignment(Pos.CENTER);
         contentArea.setPadding(new Insets(30));
-        // Combine into Layout
-        BorderPane root = new BorderPane();
-        root.setLeft(sidebar);
-        root.setCenter(contentArea);
-        // Set scene
-        Scene scene = new Scene(root, 1000, 750);
-        primaryStage.setTitle("Meine Finanzen");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        return contentArea;
     }
 
     private VBox createSidebar() {
@@ -55,8 +72,13 @@ public class Main extends Application{
         appTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
+        btnDashboard.setOnAction(e -> setMainContent(dashboardView));
         Button btnTransactions = createNavButton("💳 Transaktionen");
         Button btnCategories = createNavButton("🏷️ Kategorien");
+        btnCategories.setOnAction(e -> {
+            categoryView.refreshCategoryList();
+            setMainContent(categoryView);
+        });
         // Spacer to push database to the bottom
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -109,7 +131,12 @@ public class Main extends Application{
         if (selectedFile != null) {
             DatabaseManager.switchDatabase(selectedFile);
             updateDBLabel();
+            categoryView.refreshCategoryList();
         }
+    }
+
+    private void setMainContent(javafx.scene.Node node) {
+        contentArea.getChildren().setAll(node);
     }
 
     public static void main(String[] args) {
