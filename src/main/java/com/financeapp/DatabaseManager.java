@@ -69,28 +69,23 @@ public class DatabaseManager {
                     name TEXT NOT NULL
                 );
                 """;
-        try (
-                Connection conn = getConnection();
-                Statement stmt = conn.createStatement()
-        ) {
+        try ( Statement stmt = getConnection().createStatement() ) {
             stmt.execute(createTableSQL);
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
-
     }
 
     /*
-    ------------------
-    CRUD Operations
-    ------------------
+    ---------------------------
+    CRUD Operations - Category
+    ---------------------------
     */
     public static List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT id, name FROM CATEGORY ORDER BY name ASC";
         try (
-                Connection conn = getConnection();
-                Statement stmt = conn.createStatement();
+                Statement stmt = getConnection().createStatement();
                 ResultSet rs = stmt.executeQuery(sql);
             ) {
             while (rs.next()) {
@@ -104,10 +99,7 @@ public class DatabaseManager {
 
     public static boolean addCategory(String name){
         String sql = "INSERT INTO Category(name) VALUES(?)";
-        try (
-                Connection conn = getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql);
-            )
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
         {
             pstmt.setString(1, name);
             pstmt.executeUpdate();
@@ -121,10 +113,7 @@ public class DatabaseManager {
 
     public static boolean updateCategory(int id, String name){
         String sql = "UPDATE Category SET NAME = ? WHERE id =?";
-        try (
-                Connection conn = getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql);
-        )
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
         {
             pstmt.setString(1, name);
             pstmt.setInt(2, id);
@@ -139,10 +128,7 @@ public class DatabaseManager {
 
     public static boolean deleteCategory(int id){
         String sql = "DELETE FROM Category WHERE id =?";
-        try (
-                Connection conn = getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql);
-        )
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
         {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();

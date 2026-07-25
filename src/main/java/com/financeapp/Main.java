@@ -42,8 +42,10 @@ public class Main extends Application{
         root.setLeft(sidebar);
         root.setCenter(contentArea);
 
-        // Set scene
+        // Set scene and style
         Scene scene = new Scene(root, 1000, 750);
+        String css = getClass().getResource("/styles.css").toExternalForm();
+        scene.getStylesheets().add(css);
         primaryStage.setTitle("Meine Finanzen");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -53,7 +55,7 @@ public class Main extends Application{
     private VBox createDashboardView() {
         // Welcome Label and DB Label
         Label welcomeLabel = new Label("Welcome");
-        welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        welcomeLabel.getStyleClass().add("label");
         this.currentDbLabel = new Label();
         updateDBLabel();
         // Content Area
@@ -67,10 +69,10 @@ public class Main extends Application{
         VBox sidebar = new VBox(10);
         sidebar.setPadding(new Insets(15));
         sidebar.setPrefWidth(180);
-        sidebar.setStyle("-fx-background-color: #f4f4f6; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0;");
+        sidebar.getStyleClass().add("sidebar");
         // App Title/Logo Area
         Label appTitle = new Label("Meine Finanzen");
-        appTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        appTitle.getStyleClass().add("app-title");
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
         btnDashboard.setOnAction(e -> setMainContent(dashboardView));
@@ -86,7 +88,7 @@ public class Main extends Application{
         // Switch DB Action Button at the bottom
         Button btnSwitchDB = new Button("📁 DB wechseln");
         btnSwitchDB.setMaxWidth(Double.MAX_VALUE);
-        btnSwitchDB.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-radius: 4; -fx-background-radius: 4;");
+        btnSwitchDB.getStyleClass().add("switch-db-button");
         btnSwitchDB.setOnAction(e -> handleSwitchDatabase());
 
         sidebar.getChildren().addAll(
@@ -106,14 +108,13 @@ public class Main extends Application{
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setStyle("-fx-background-color: transparent; -fx-font-size: 13px; -fx-padding: 8 10;");
+        btn.getStyleClass().add("nav-button");
         return btn;
     }
 
     private void updateDBLabel() {
         String dbName = DatabaseManager.getDatabasePath();
         currentDbLabel.setText("Aktuelle DB: " + dbName);
-        currentDbLabel.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
     }
 
     private void handleSwitchDatabase()  {
@@ -130,18 +131,22 @@ public class Main extends Application{
 
         // Switch DB and update Labels
         if (selectedFile != null) {
-            DatabaseManager.setDatabasePath(selectedFile.getAbsolutePath());
             try {
                 DatabaseManager.switchDatabase(selectedFile.getAbsolutePath());
+                reloadDatabaseConnection();
             } catch ( SQLException e) {
-                System.err.println("Error: " + e.getMessage());
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Datenbank Fehler");
+                alert.setHeaderText("Fehler beim DB Wechsel");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
             }
-            updateDBLabel();
-            categoryView.refreshCategoryList();
         }
     }
 
     private void reloadDatabaseConnection() {
+        updateDBLabel();
+        categoryView.refreshCategoryList();
     }
 
     private void setMainContent(javafx.scene.Node node) {

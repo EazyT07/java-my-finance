@@ -1,0 +1,45 @@
+/* Sidebar container */
+.sidebar {
+    -fx-background-color: #f4f4f6;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* Label */
+.label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* App Title */
+.app-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+/* Navigation buttons */
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-padding: 8 10;
+}
+
+/* Bonus: Add a hover effect to the buttons! */
+.nav-button:hover {
+    -fx-background-color: #e4e4e6;
+    -fx-cursor: hand;
+}
+
+/* Switch DB Button */
+.switch-db-button {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.switch-db-button:hover {
+    -fx-background-color: #f0f0f0;
+    -fx-cursor: hand;
+}

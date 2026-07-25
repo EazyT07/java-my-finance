@@ -73,8 +73,10 @@ public class CategoryView extends VBox {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            DatabaseManager.deleteCategory(selected.getId());
-            refreshCategoryList();
+            if(DatabaseManager.deleteCategory(selected.getId()))
+                refreshCategoryList();
+            else
+                showAlert("Fehler: Kategorie konnte nicht gelöscht werden");
         }
     }
 
@@ -92,8 +94,10 @@ public class CategoryView extends VBox {
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(newName -> {
             if (!newName.trim().isEmpty()) {
-                DatabaseManager.updateCategory(selected.getId(), newName.trim());
-                refreshCategoryList();
+                if(DatabaseManager.updateCategory(selected.getId(), newName.trim()))
+                    refreshCategoryList();
+                else
+                    showAlert("Fehler beim Ändern");
             }
         });
 
@@ -107,9 +111,9 @@ public class CategoryView extends VBox {
             inputField.clear();
             refreshCategoryList();
         }
-        else {
+        else
             showAlert("Fehler: Kategorie konnte nicht hinzugefügt werden");
-        }
+
     }
 
     private void showAlert(String content) {
