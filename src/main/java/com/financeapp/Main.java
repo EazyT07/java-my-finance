@@ -10,6 +10,7 @@ import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
+import java.sql.SQLException;
 
 public class Main extends Application{
 
@@ -110,12 +111,12 @@ public class Main extends Application{
     }
 
     private void updateDBLabel() {
-        String dbName = DatabaseManager.getCurrentDatabaseName();
+        String dbName = DatabaseManager.getDatabasePath();
         currentDbLabel.setText("Aktuelle DB: " + dbName);
         currentDbLabel.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
     }
 
-    private void handleSwitchDatabase() {
+    private void handleSwitchDatabase()  {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("DB auswählen");
 
@@ -129,10 +130,18 @@ public class Main extends Application{
 
         // Switch DB and update Labels
         if (selectedFile != null) {
-            DatabaseManager.switchDatabase(selectedFile);
+            DatabaseManager.setDatabasePath(selectedFile.getAbsolutePath());
+            try {
+                DatabaseManager.switchDatabase(selectedFile.getAbsolutePath());
+            } catch ( SQLException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
             updateDBLabel();
             categoryView.refreshCategoryList();
         }
+    }
+
+    private void reloadDatabaseConnection() {
     }
 
     private void setMainContent(javafx.scene.Node node) {

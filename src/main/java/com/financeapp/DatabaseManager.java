@@ -4,26 +4,62 @@ import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 public class DatabaseManager {
     
-    private static File currentDbFile = new File("my_finance_tomek.db");
+    private static final String PREF_KEY_DB_PATH = "last_selected_db_path";
+    private static final Preferences prefs = Preferences.userNodeForPackage(DatabaseManager.class);
+    private static Connection activeConnection = null;
     
-    public static Connection getConnection() throws SQLException {
-        String url = "jdbc:sqlite:" + currentDbFile.getAbsolutePath();
-        return DriverManager.getConnection(url);
+    public static String getDatabasePath() {
+        String defaultPath = System.getProperty("user.home")
+                + File.separator + ".myfinance"
+                + File.separator + "finance.db";
+        return prefs.get(PREF_KEY_DB_PATH, defaultPath);
     }
 
-    public static void switchDatabase(File newDbFile) {
-        if (newDbFile == null) return;
-        currentDbFile = newDbFile;
-        System.out.println("Switched to DB: " + currentDbFile.getName());
+    public static void setDatabasePath(String newPath) {
+        prefs.put(PREF_KEY_DB_PATH, newPath);
+    }
 
+    public static synchronized Connection getConnection() throws  SQLException {
+        if (activeConnection == null || activeConnection.isClosed()) {
+            activeConnection = createNewConnection(getDatabasePath());
+        }
+        return activeConnection;
+    }
+
+    private static Connection createNewConnection(String databasePath) throws SQLException {
+        File dbFile = new File(databasePath);
+
+        if(dbFile.getParentFile() != null && !dbFile.getParentFile().exists()) {
+            dbFile.getParentFile().mkdirs();
+        }
+        String dbUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
+        return DriverManager.getConnection(dbUrl);
+
+    }
+
+    public static synchronized void switchDatabase(String newAbsolutePath) throws SQLException {
+        closeConnection();
+        setDatabasePath(newAbsolutePath);
+        activeConnection = createNewConnection(newAbsolutePath);
         initializeDatabase();
     }
 
-    public static String getCurrentDatabaseName() {
-        return currentDbFile.getName();
+    private static void closeConnection() {
+        if (activeConnection != null) {
+            try {
+                if (!activeConnection.isClosed()) {
+                    activeConnection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                activeConnection = null;
+            }
+        }
     }
 
     public static void initializeDatabase() {
@@ -44,6 +80,11 @@ public class DatabaseManager {
 
     }
 
+    /*
+    ------------------
+    CRUD Operations
+    ------------------
+    */
     public static List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT id, name FROM CATEGORY ORDER BY name ASC";
