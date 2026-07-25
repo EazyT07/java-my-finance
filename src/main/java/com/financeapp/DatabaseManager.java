@@ -1,7 +1,12 @@
 package com.financeapp;
 
 import java.io.File;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -37,8 +42,12 @@ public class DatabaseManager {
             dbFile.getParentFile().mkdirs();
         }
         String dbUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-        return DriverManager.getConnection(dbUrl);
-
+        Connection conn = DriverManager.getConnection(dbUrl);
+        // Force Foreign Keys ON immediately
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA foreign_keys = ON;");
+        }
+        return conn;
     }
 
     public static synchronized void switchDatabase(String newAbsolutePath) throws SQLException {
@@ -63,14 +72,25 @@ public class DatabaseManager {
     }
 
     public static void initializeDatabase() {
-        String createTableSQL = """
+        String createCategorySQL = """
                 CREATE TABLE IF NOT EXISTS Category (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL
                 );
                 """;
+        
+        String createSubCategorySQL = """
+                CREATE TABLE IF NOT EXISTS Subcategory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    category_id INTEGER NOT NULL,
+                    FOREIGN KEY (category_id) REFERENCES Category(id) ON DELETE CASCADE    
+                )
+                """;
         try ( Statement stmt = getConnection().createStatement() ) {
-            stmt.execute(createTableSQL);
+            // Create all tables
+            stmt.execute(createCategorySQL);
+            stmt.execute(createSubCategorySQL);
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
@@ -136,6 +156,91 @@ public class DatabaseManager {
 
         } catch (SQLException e) {
             System.err.println("Error deleting category: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /*
+    ------------------------------
+    CRUD Operations - Subcategory
+    ------------------------------
+    */
+    public static List<Subcategory> getAllSubcategories() {
+        List<Subcategory> subcategories = new ArrayList<>();
+        String sql = "SELECT id, name, category_id FROM Subcategory ORDER BY name ASC";
+        
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    subcategories.add(new Subcategory(
+                            rs.getInt("id"), 
+                            rs.getString("name"), 
+                            rs.getInt("category_id")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching subcategories: " + e.getMessage());
+        }
+        return subcategories;
+    }
+
+    public static List<Subcategory> getSubcategoriesByCategory(int categoryId) {
+        List<Subcategory> subcategories = new ArrayList<>();
+        String sql = "SELECT id, name, category_id FROM Subcategory WHERE category_id = ? ORDER BY name ASC";
+        
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setInt(1, categoryId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    subcategories.add(new Subcategory(
+                            rs.getInt("id"), 
+                            rs.getString("name"), 
+                            rs.getInt("category_id")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching subcategories: " + e.getMessage());
+        }
+        return subcategories;
+    }
+
+    public static boolean addSubcategory(String name, int categoryId) {
+        String sql = "INSERT INTO Subcategory(name, category_id) VALUES(?, ?)";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, categoryId);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error adding subcategory: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean updateSubcategory(int id, String name, int categoryId) {
+        String sql = "UPDATE Subcategory SET name = ?, category_id = ? WHERE id = ?";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, categoryId);
+            pstmt.setInt(3, id);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error updating subcategory: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean deleteSubcategory(int id) {
+        String sql = "DELETE FROM Subcategory WHERE id = ?";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error deleting subcategory: " + e.getMessage());
             return false;
         }
     }

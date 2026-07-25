@@ -18,6 +18,19 @@
     -fx-text-fill: #333333;
 }
 
+/* View Buttons */
+.view-button {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-padding: 8 10;
+}
+
+/* Bonus: Add a hover effect to the buttons! */
+.view-button:hover {
+    -fx-background-color: #e4e4e6;
+    -fx-cursor: hand;
+}
+
 /* Navigation buttons */
 .nav-button {
     -fx-background-color: transparent;

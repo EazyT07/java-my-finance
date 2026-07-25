@@ -1,16 +1,23 @@
 package com.financeapp;
 
+import java.io.File;
+import java.sql.SQLException;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.File;
-import java.sql.SQLException;
 
 public class Main extends Application{
 
@@ -18,6 +25,7 @@ public class Main extends Application{
     private Label currentDbLabel;
     private StackPane contentArea;
     private CategoryView categoryView;
+    private SubcategoryView subcategoryView;
     private VBox dashboardView;
 
     @Override
@@ -29,8 +37,9 @@ public class Main extends Application{
         DatabaseManager.initializeDatabase();
 
         // Build Sub-Views
-        categoryView = new CategoryView();
         dashboardView = createDashboardView();
+        categoryView = new CategoryView();
+        subcategoryView = new SubcategoryView();
 
         // Setup Content Area Container
         contentArea = new StackPane();
@@ -82,6 +91,11 @@ public class Main extends Application{
             categoryView.refreshCategoryList();
             setMainContent(categoryView);
         });
+        Button btnSubCategories = createNavButton("🏷️ Unterkategorien");
+        btnSubCategories.setOnAction(e -> {
+            subcategoryView.refreshSubcategoryList();
+            setMainContent(subcategoryView);
+        });
         // Spacer to push database to the bottom
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -97,6 +111,7 @@ public class Main extends Application{
                 btnDashboard,
                 btnTransactions,
                 btnCategories,
+                btnSubCategories,
                 spacer,
                 new Separator(),
                 btnSwitchDB
