@@ -21,7 +21,7 @@ public class CategoryView extends VBox {
 
         // Header
         Label headerLabel = new Label("Kategorien");
-        headerLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        headerLabel.getStyleClass().add("label");
 
         // Input Controls
         inputField = new TextField();

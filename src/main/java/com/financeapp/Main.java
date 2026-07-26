@@ -26,8 +26,10 @@ public class Main extends Application{
     private StackPane contentArea;
     private CategoryView categoryView;
     private SubcategoryView subcategoryView;
+    private AccountView accountView;
     private VBox dashboardView;
 
+    @SuppressWarnings("exports")
     @Override
     public void start(Stage primaryStage) {
 
@@ -40,6 +42,7 @@ public class Main extends Application{
         dashboardView = createDashboardView();
         categoryView = new CategoryView();
         subcategoryView = new SubcategoryView();
+        accountView = new AccountView();
 
         // Setup Content Area Container
         contentArea = new StackPane();
@@ -75,17 +78,25 @@ public class Main extends Application{
     }
 
     private VBox createSidebar() {
+        
         VBox sidebar = new VBox(10);
         sidebar.setPadding(new Insets(15));
         sidebar.setPrefWidth(180);
         sidebar.getStyleClass().add("sidebar");
+        
         // App Title/Logo Area
         Label appTitle = new Label("Meine Finanzen");
         appTitle.getStyleClass().add("app-title");
+        
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
         btnDashboard.setOnAction(e -> setMainContent(dashboardView));
         Button btnTransactions = createNavButton("💳 Transaktionen");
+
+        // Master Data Section
+        Separator mdSeparator = new Separator();
+        Label mdLabel = new Label("Stammdaten");
+        mdLabel.getStyleClass().add("sidebar-section-label");
         Button btnCategories = createNavButton("🏷️ Kategorien");
         btnCategories.setOnAction(e -> {
             categoryView.refreshCategoryList();
@@ -96,6 +107,12 @@ public class Main extends Application{
             subcategoryView.refreshSubcategoryList();
             setMainContent(subcategoryView);
         });
+        Button btnAccounts = createNavButton("🏷️ Konto");
+        btnAccounts.setOnAction(e -> {
+            accountView.refreshAccountList();;
+            setMainContent(accountView);
+        });
+
         // Spacer to push database to the bottom
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -110,6 +127,9 @@ public class Main extends Application{
                 new Separator(),
                 btnDashboard,
                 btnTransactions,
+                mdSeparator,
+                mdLabel,
+                btnAccounts,
                 btnCategories,
                 btnSubCategories,
                 spacer,

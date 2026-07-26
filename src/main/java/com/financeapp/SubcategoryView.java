@@ -12,8 +12,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import com.financeapp.SubcategoryDialog;
-
 public class SubcategoryView extends VBox {
 
     private final ComboBox<Category> categoryComboBox;
@@ -25,7 +23,7 @@ public class SubcategoryView extends VBox {
         setPadding(new Insets(20));
 
         // 1. Parent Category Selector
-        Label lblSelectCategory = new Label("Übergeordnete Kategorie wählen:");
+        Label lblSelectCategory = new Label("Unterkategorien");
         categoryComboBox = new ComboBox<>();
         categoryComboBox.setPromptText("Kategorie auswählen...");
         categoryComboBox.setOnAction(e -> refreshSubcategoryList());

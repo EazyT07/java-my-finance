@@ -15,6 +15,7 @@ public class SubcategoryDialog extends Dialog<Subcategory> {
     private TextField name;
     private Subcategory subcategory;
 
+    @SuppressWarnings("exports")
     public SubcategoryDialog(Window ownerWindow, Subcategory subcategory) {
         this.subcategory = subcategory;
 

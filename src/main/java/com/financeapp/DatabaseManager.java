@@ -28,6 +28,7 @@ public class DatabaseManager {
         prefs.put(PREF_KEY_DB_PATH, newPath);
     }
 
+    @SuppressWarnings("exports")
     public static synchronized Connection getConnection() throws  SQLException {
         if (activeConnection == null || activeConnection.isClosed()) {
             activeConnection = createNewConnection(getDatabasePath());
@@ -72,6 +73,13 @@ public class DatabaseManager {
     }
 
     public static void initializeDatabase() {
+        String createAccountSQL = """
+                CREATE TABLE IF NOT EXISTS Account (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL
+                );
+                """;
+        
         String createCategorySQL = """
                 CREATE TABLE IF NOT EXISTS Category (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,6 +97,7 @@ public class DatabaseManager {
                 """;
         try ( Statement stmt = getConnection().createStatement() ) {
             // Create all tables
+            stmt.execute(createAccountSQL);
             stmt.execute(createCategorySQL);
             stmt.execute(createSubCategorySQL);
         } catch (SQLException e) {
@@ -96,6 +105,70 @@ public class DatabaseManager {
         }
     }
 
+    /*
+    ---------------------------
+    CRUD Operations - Account
+    ---------------------------
+    */
+    public static List<Account> getAllAccounts() {
+        List<Account> accounts = new ArrayList<>();
+        String sql = "SELECT id, name FROM ACCOUNT ORDER BY name ASC";
+        try (
+                Statement stmt = getConnection().createStatement();
+                ResultSet rs = stmt.executeQuery(sql);
+            ) {
+            while (rs.next()) {
+                accounts.add(new Account(rs.getInt("id"), rs.getString("name")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return  accounts;
+    }
+
+    public static boolean addAccount(String name){
+        String sql = "INSERT INTO Account(name) VALUES(?)";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
+        {
+            pstmt.setString(1, name);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Error adding Account: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean updateAccount(int id, String name){
+        String sql = "UPDATE Account SET NAME = ? WHERE id =?";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
+        {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, id);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating account: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean deleteAccount(int id){
+        String sql = "DELETE FROM Account WHERE id =?";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
+        {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Error deleting account: " + e.getMessage());
+            return false;
+        }
+    }
+    
     /*
     ---------------------------
     CRUD Operations - Category
