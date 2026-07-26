@@ -20,7 +20,6 @@
 
 /* View Buttons */
 .view-button {
-    -fx-background-color: transparent;
     -fx-font-size: 13px;
     -fx-padding: 8 10;
 }

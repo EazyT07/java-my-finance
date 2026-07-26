@@ -13,8 +13,10 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -22,7 +24,7 @@ import javafx.scene.layout.VBox;
 public class SubcategoryView extends VBox {
 
     private final ComboBox<Category> categoryComboBox;
-    private final ListView<Subcategory> subcategoryListView;
+    private final TableView<Subcategory> subcategoryTableView;
     private final ObservableList<Subcategory> subcategoryData;
 
     public SubcategoryView() {
@@ -35,24 +37,33 @@ public class SubcategoryView extends VBox {
         categoryComboBox.setPromptText("Kategorie auswählen...");
         categoryComboBox.setOnAction(e -> refreshSubcategoryList());
 
-        // 2. Subcategory List
+        // 2. Subcategory Table
+        //----------------------
         subcategoryData = FXCollections.observableArrayList();
-        subcategoryListView = new ListView<>(subcategoryData);
-        subcategoryListView.setPrefHeight(250);
+        subcategoryTableView = new TableView<>(subcategoryData);
+        subcategoryTableView.setPrefHeight(250);
+        // Name
+        TableColumn<Subcategory, String> nameColumn = new TableColumn<>("Unterkategorie");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        subcategoryTableView.getColumns().add(nameColumn);
+        // Category Name
+        TableColumn<Subcategory, String> categoryColumn = new TableColumn<>("Kategorie");
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("categoryName"));
+        subcategoryTableView.getColumns().add(categoryColumn);
 
+        // Buttons
+        //---------
         Button btnAdd = new Button("Hinzufügen");
         btnAdd.setOnAction(e -> handleAddSubcategory());
-
         Button btnEdit = new Button("Ändern");
         btnEdit.setOnAction(e -> handleEditSubcategory());
-
         Button btnDelete = new Button("Löschen");
         btnDelete.setOnAction(e -> handleDeleteSubcategory());
 
         HBox inputArea = new HBox(10, btnAdd, btnEdit, btnDelete);
 
         // Add everything to the VBox
-        getChildren().addAll(lblSelectCategory, categoryComboBox, inputArea, subcategoryListView);
+        getChildren().addAll(lblSelectCategory, categoryComboBox, inputArea, subcategoryTableView);
 
         // Initial Data Load
         refreshCategoryDropdown();
@@ -112,7 +123,7 @@ public class SubcategoryView extends VBox {
         // 5. Convert the result when "Save" is clicked
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                return new Subcategory(0, dialogNameField.getText().trim(), dialogCategoryBox.getValue().getId());
+                return new Subcategory(0, dialogNameField.getText().trim(), dialogCategoryBox.getValue().getId(), "");
             }
             return null;
         });
@@ -134,7 +145,7 @@ public class SubcategoryView extends VBox {
     }
     
     private void handleDeleteSubcategory() {
-        Subcategory selectedSub = subcategoryListView.getSelectionModel().getSelectedItem();
+        Subcategory selectedSub = subcategoryTableView.getSelectionModel().getSelectedItem();
 
         if (selectedSub != null) {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Unterkategorie wirklich löschen?", ButtonType.YES,

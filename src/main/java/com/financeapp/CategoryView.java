@@ -29,7 +29,6 @@ public class CategoryView extends VBox {
         inputField.setPrefWidth(250);
 
         Button btnAdd = new Button("Hinzufügen");
-        btnAdd.getStyleClass().add("view-button");
         btnAdd.setOnAction(e -> handleAddCategory());
 
         HBox inputLayout = new HBox(10, inputField, btnAdd);
@@ -43,7 +42,6 @@ public class CategoryView extends VBox {
         Button btnEdit = new Button("Ändern");
         btnEdit.setOnAction(e -> handleEditCategory());
         Button btnDelete = new Button("Löschen");
-        btnDelete.getStyleClass().add("view-button");
         btnDelete.setOnAction(e -> handleDeleteCategory());
 
         // Layout

@@ -167,7 +167,12 @@ public class DatabaseManager {
     */
     public static List<Subcategory> getAllSubcategories() {
         List<Subcategory> subcategories = new ArrayList<>();
-        String sql = "SELECT id, name, category_id FROM Subcategory ORDER BY name ASC";
+        String sql = """
+            SELECT s.id, s.name, s.category_id, c.name AS cat_name
+            FROM Subcategory s
+            JOIN Category c ON s.category_id = c.id
+            ORDER BY s.name ASC
+        """;
         
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -175,7 +180,8 @@ public class DatabaseManager {
                     subcategories.add(new Subcategory(
                             rs.getInt("id"), 
                             rs.getString("name"), 
-                            rs.getInt("category_id")
+                            rs.getInt("category_id"),
+                            rs.getString("cat_name")
                     ));
                 }
             }
@@ -196,7 +202,8 @@ public class DatabaseManager {
                     subcategories.add(new Subcategory(
                             rs.getInt("id"), 
                             rs.getString("name"), 
-                            rs.getInt("category_id")
+                            rs.getInt("category_id"),
+                            rs.getString("c.name")
                     ));
                 }
             }
