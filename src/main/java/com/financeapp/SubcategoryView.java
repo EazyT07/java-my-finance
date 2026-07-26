@@ -6,20 +6,13 @@ import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
+import com.financeapp.SubcategoryDialog;
 
 public class SubcategoryView extends VBox {
 
@@ -38,7 +31,7 @@ public class SubcategoryView extends VBox {
         categoryComboBox.setOnAction(e -> refreshSubcategoryList());
 
         // 2. Subcategory Table
-        //----------------------
+        // ----------------------
         subcategoryData = FXCollections.observableArrayList();
         subcategoryTableView = new TableView<>(subcategoryData);
         subcategoryTableView.setPrefHeight(250);
@@ -52,7 +45,7 @@ public class SubcategoryView extends VBox {
         subcategoryTableView.getColumns().add(categoryColumn);
 
         // Buttons
-        //---------
+        // ---------
         Button btnAdd = new Button("Hinzufügen");
         btnAdd.setOnAction(e -> handleAddSubcategory());
         Button btnEdit = new Button("Ändern");
@@ -99,7 +92,7 @@ public class SubcategoryView extends VBox {
 
         ComboBox<Category> dialogCategoryBox = new ComboBox<>();
         dialogCategoryBox.setPromptText("Kategorie wählen...");
-        dialogCategoryBox.setItems(categoryComboBox.getItems()); 
+        dialogCategoryBox.setItems(categoryComboBox.getItems());
 
         TextField dialogNameField = new TextField();
         dialogNameField.setPromptText("Name der Unterkategorie");
@@ -140,10 +133,24 @@ public class SubcategoryView extends VBox {
     }
 
     private void handleEditSubcategory() {
+        Subcategory selectedSub = subcategoryTableView.getSelectionModel().getSelectedItem();
 
-        System.out.println("Edit Sub Category");
+        if (selectedSub == null) {
+            showAlert("Bitte Unterkategorie auswählen");
+            return;
+        }
+
+        // Open Dialog
+        SubcategoryDialog dialog = new SubcategoryDialog(getScene().getWindow(), selectedSub);
+        Optional<Subcategory> result = dialog.showAndWait();
+        result.ifPresent(updateSub -> {
+            if (DatabaseManager.updateSubcategory(updateSub.getId(), updateSub.getName(), updateSub.getCategoryId()))
+                refreshSubcategoryList();
+            else
+                showAlert("Fehler beim Ändern");
+        });
     }
-    
+
     private void handleDeleteSubcategory() {
         Subcategory selectedSub = subcategoryTableView.getSelectionModel().getSelectedItem();
 

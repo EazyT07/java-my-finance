@@ -162,6 +162,7 @@ public class Main extends Application{
     private void reloadDatabaseConnection() {
         updateDBLabel();
         categoryView.refreshCategoryList();
+        subcategoryView.refreshSubcategoryList();
     }
 
     private void setMainContent(javafx.scene.Node node) {
