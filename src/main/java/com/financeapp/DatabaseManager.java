@@ -1,6 +1,7 @@
 package com.financeapp;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -104,6 +105,7 @@ public class DatabaseManager {
                     type TEXT,
                     description TEXT,
                     subcategory_id INTEGER NOT NULL,
+                    amount REAL,
                     FOREIGN KEY (account_id) REFERENCES Account(id) ON DELETE CASCADE,
                     FOREIGN KEY (subcategory_id) REFERENCES Subcategory(id) ON DELETE CASCADE,
                     CHECK (type IN ('INC', 'EXP'))
@@ -349,7 +351,10 @@ public class DatabaseManager {
     public static List<Transaction> getAllTransactions() {
         List<Transaction> transactions = new ArrayList<>();
         String sql = """
-            SELECT t.id, t.account_id, a.name AS acc_name, t.date, t.type, t.description, t.subcategory_id, s.name AS subcat_name, c.name AS cat_name
+            SELECT 
+            t.id, t.account_id, a.name AS acc_name,
+            t.date, t.type, t.description, t.subcategory_id,
+            s.name AS subcat_name, c.name AS cat_name, t.amount
             FROM AppTransaction t
             JOIN Account a ON t.account_id = a.id
             JOIN Subcategory s ON t.subcategory_id = s.id 
@@ -369,7 +374,8 @@ public class DatabaseManager {
                             rs.getString("description"),
                             rs.getInt("subcategory_id"),
                             rs.getString("subcat_name"),
-                            rs.getString("cat_name")
+                            rs.getString("cat_name"),
+                            rs.getBigDecimal("amount")
                     ));
                 }
             }
@@ -379,14 +385,20 @@ public class DatabaseManager {
         return transactions;
     }
 
-    public static boolean addTransaction(int accountId, LocalDate date, String type, String description, int subcategoryId) {
-        String sql = "INSERT INTO AppTransaction(account_id, date, type, description, subcategory_id) VALUES(?, ?, ?, ?, ?)";
+    public static boolean addTransaction(int accountId, LocalDate date, String type,
+                                         String description, int subcategoryId, BigDecimal amount) {
+        String sql = """
+                INSERT INTO AppTransaction(account_id, date, type, description, subcategory_id, amount)
+                VALUES(?, ?, ?, ?, ?, ?)
+                
+                """;
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setInt(1, accountId);
             pstmt.setDate(2, java.sql.Date.valueOf(date));
             pstmt.setString(3, type);
             pstmt.setString(4, description);
             pstmt.setInt(5, subcategoryId);
+            pstmt.setBigDecimal(6, amount);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -395,7 +407,8 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean updateTransaction(int id, int accountId, LocalDate date, String type, String description, int subcategoryId) {
+    public static boolean updateTransaction(int id, int accountId, LocalDate date, String type,
+                                            String description, int subcategoryId, BigDecimal amount) {
         String sql = """
                      UPDATE AppTransaction
                      SET account_id = ?, date = ?, type = ?, description = ?, subcategory_id = ?
@@ -408,6 +421,7 @@ public class DatabaseManager {
             pstmt.setString(4, description);
             pstmt.setInt(5, subcategoryId);
             pstmt.setInt(6, id);
+            pstmt.setBigDecimal(7, amount);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -449,9 +463,9 @@ public class DatabaseManager {
             addSubcategory("Restaurant", 3);
 
             // 4. Add Test Transactions (Using LocalDate)
-            addTransaction(1, java.time.LocalDate.now().minusDays(5), "EXP", "Monatliche Miete", 1);
-            addTransaction(1, java.time.LocalDate.now().minusDays(2), "INC", "Gehaltseingang", 3);
-            addTransaction(3, java.time.LocalDate.now().minusDays(1), "EXP", "Abendessen", 4);
+            addTransaction(1, java.time.LocalDate.now().minusDays(5), "EXP", "Monatliche Miete", 1, new BigDecimal("123.40"));
+            addTransaction(1, java.time.LocalDate.now().minusDays(2), "INC", "Gehaltseingang", 3, new BigDecimal("1456.78"));
+            addTransaction(3, java.time.LocalDate.now().minusDays(1), "EXP", "Abendessen", 4, new BigDecimal("3456.89"));
 
             System.out.println("Dummy test data inserted successfully!");
         } catch (Exception e) {

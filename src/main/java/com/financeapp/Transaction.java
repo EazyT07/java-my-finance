@@ -1,6 +1,7 @@
 package com.financeapp;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 public class Transaction {
     
@@ -13,8 +14,13 @@ public class Transaction {
     private int subcategoryId;
     private String subcategoryName;
     private String categoryName;
+    private BigDecimal amount;
 
-    public Transaction(int id, int accountId, String accountName, LocalDate date, String type, String description, int subcategoryId, String subcategoryName, String categoryName) {
+
+    public Transaction(
+        int id, int accountId, String accountName, LocalDate date,
+        String type, String description, int subcategoryId,
+        String subcategoryName, String categoryName, BigDecimal amount) {
         this.id = id;
         this.accountId = accountId;
         this.accountName = accountName;
@@ -24,6 +30,7 @@ public class Transaction {
         this.subcategoryId = subcategoryId;
         this.subcategoryName = subcategoryName;
         this.categoryName = categoryName;
+        this.amount = amount;
     }
 
     public int getId() { return id; }
@@ -52,4 +59,7 @@ public class Transaction {
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 }

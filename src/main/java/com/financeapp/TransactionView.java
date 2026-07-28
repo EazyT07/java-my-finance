@@ -1,7 +1,10 @@
 package com.financeapp;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,24 +15,22 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-
 public class TransactionView extends VBox {
 
     private final TableView<Transaction> transactionTableView;
     private final ObservableList<Transaction> transactionData;
 
     public TransactionView() {
-        
+
         setSpacing(15);
         setPadding(new Insets(20));
 
         // Transaction Table
-        //-------------------
+        // -------------------
         transactionData = FXCollections.observableArrayList();
         transactionTableView = new TableView<>(transactionData);
-        initTableView();        
-        
-        
+        initTableView();
+
         // Add everything to the VBox
         getChildren().addAll(transactionTableView);
     }
@@ -65,6 +66,24 @@ public class TransactionView extends VBox {
         TableColumn<Transaction, String> catNameColumn = new TableColumn<>("Kategorie");
         catNameColumn.setCellValueFactory(new PropertyValueFactory<>("categoryName"));
         transactionTableView.getColumns().add(catNameColumn);
+        // Column: Amount
+        TableColumn<Transaction, BigDecimal> amountColumn = new TableColumn<>("Betrag");
+        amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amountColumn.setCellFactory(column -> new TableCell<Transaction, BigDecimal>() {
+            private final NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+
+            @Override
+            protected void updateItem(BigDecimal amount, boolean empty) {
+                super.updateItem(amount, empty);
+                if (empty || amount == null) {
+                    setText(null);
+                } else {
+                    setText(germanFormat.format(amount));
+                }
+            }
+        });
+
+        transactionTableView.getColumns().add(amountColumn);
     }
-  
+
 }
