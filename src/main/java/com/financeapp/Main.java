@@ -27,6 +27,7 @@ public class Main extends Application{
     private CategoryView categoryView;
     private SubcategoryView subcategoryView;
     private AccountView accountView;
+    private TransactionView transactionView;
     private VBox dashboardView;
 
     @SuppressWarnings("exports")
@@ -37,12 +38,14 @@ public class Main extends Application{
 
         // Init the default DB
         DatabaseManager.initializeDatabase();
+        //DatabaseManager.insertDummyTestData();
 
         // Build Sub-Views
         dashboardView = createDashboardView();
         categoryView = new CategoryView();
         subcategoryView = new SubcategoryView();
         accountView = new AccountView();
+        transactionView = new TransactionView();
 
         // Setup Content Area Container
         contentArea = new StackPane();
@@ -91,7 +94,12 @@ public class Main extends Application{
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
         btnDashboard.setOnAction(e -> setMainContent(dashboardView));
+        // Transactions
         Button btnTransactions = createNavButton("💳 Transaktionen");
+        btnTransactions.setOnAction(e -> {
+            transactionView.refreshTransactionList();
+            setMainContent(transactionView);
+        });
 
         // Master Data Section
         Separator mdSeparator = new Separator();
@@ -102,11 +110,13 @@ public class Main extends Application{
             categoryView.refreshCategoryList();
             setMainContent(categoryView);
         });
+        // Subcategory
         Button btnSubCategories = createNavButton("🏷️ Unterkategorien");
         btnSubCategories.setOnAction(e -> {
             subcategoryView.refreshSubcategoryList();
             setMainContent(subcategoryView);
         });
+        // Account
         Button btnAccounts = createNavButton("🏷️ Konto");
         btnAccounts.setOnAction(e -> {
             accountView.refreshAccountList();;

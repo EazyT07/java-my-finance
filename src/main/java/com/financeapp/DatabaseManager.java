@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -95,11 +96,25 @@ public class DatabaseManager {
                     FOREIGN KEY (category_id) REFERENCES Category(id) ON DELETE CASCADE    
                 )
                 """;
+        String createTransactionSQL = """
+                CREATE TABLE IF NOT EXISTS "AppTransaction" (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id INTEGER NOT NULL,
+                    date DATE NOT NULL,
+                    type TEXT,
+                    description TEXT,
+                    subcategory_id INTEGER NOT NULL,
+                    FOREIGN KEY (account_id) REFERENCES Account(id) ON DELETE CASCADE,
+                    FOREIGN KEY (subcategory_id) REFERENCES Subcategory(id) ON DELETE CASCADE,
+                    CHECK (type IN ('INC', 'EXP'))
+                );
+                """;
         try ( Statement stmt = getConnection().createStatement() ) {
             // Create all tables
             stmt.execute(createAccountSQL);
             stmt.execute(createCategorySQL);
             stmt.execute(createSubCategorySQL);
+            stmt.execute(createTransactionSQL);
         } catch (SQLException e) {
             System.err.println("Error: " + e.getMessage());
         }
@@ -325,9 +340,124 @@ public class DatabaseManager {
         }
     }
 
+    /*
+    ------------------------------
+    CRUD Operations - Transaction
+    ------------------------------
+    */
 
+    public static List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = """
+            SELECT t.id, t.account_id, a.name AS acc_name, t.date, t.type, t.description, t.subcategory_id, s.name AS subcat_name, c.name AS cat_name
+            FROM AppTransaction t
+            JOIN Account a ON t.account_id = a.id
+            JOIN Subcategory s ON t.subcategory_id = s.id 
+            JOIN Category c ON s.category_id = c.id
+            ORDER BY t.date ASC
+        """;
+        
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    transactions.add(new Transaction(
+                            rs.getInt("id"), 
+                            rs.getInt("account_id"), 
+                            rs.getString("acc_name"),
+                            rs.getDate("date") != null ? rs.getDate("date").toLocalDate() : null,
+                            rs.getString("type"),
+                            rs.getString("description"),
+                            rs.getInt("subcategory_id"),
+                            rs.getString("subcat_name"),
+                            rs.getString("cat_name")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching subcategories: " + e.getMessage());
+        }
+        return transactions;
+    }
 
+    public static boolean addTransaction(int accountId, LocalDate date, String type, String description, int subcategoryId) {
+        String sql = "INSERT INTO AppTransaction(account_id, date, type, description, subcategory_id) VALUES(?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setInt(1, accountId);
+            pstmt.setDate(2, java.sql.Date.valueOf(date));
+            pstmt.setString(3, type);
+            pstmt.setString(4, description);
+            pstmt.setInt(5, subcategoryId);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error adding transaction: " + e.getMessage());
+            return false;
+        }
+    }
 
+    public static boolean updateTransaction(int id, int accountId, LocalDate date, String type, String description, int subcategoryId) {
+        String sql = """
+                     UPDATE AppTransaction
+                     SET account_id = ?, date = ?, type = ?, description = ?, subcategory_id = ?
+                     WHERE id = ?
+                     """;
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+            pstmt.setInt(1, accountId);
+            pstmt.setDate(2, java.sql.Date.valueOf(date));
+            pstmt.setString(3, type);
+            pstmt.setString(4, description);
+            pstmt.setInt(5, subcategoryId);
+            pstmt.setInt(6, id);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error updating transaction: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean deleteTransaction(int id){
+        String sql = "DELETE FROM AppTransaction WHERE id =?";
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
+        {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Error deleting transaction: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static void insertDummyTestData() {
+        try {
+            // 1. Add Test Accounts
+            addAccount("Girokonto");
+            addAccount("Tagesgeld");
+            addAccount("Credit Card");
+
+            // 2. Add Test Categories
+            addCategory("Fixkosten");
+            addCategory("Einnahmen");
+            addCategory("Freizeit");
+
+            // 3. Add Test Subcategories (Assuming Category IDs 1, 2, and 3 exist)
+            addSubcategory("Miete", 1);
+            addSubcategory("Strom", 1);
+            addSubcategory("Gehalt", 2);
+            addSubcategory("Restaurant", 3);
+
+            // 4. Add Test Transactions (Using LocalDate)
+            addTransaction(1, java.time.LocalDate.now().minusDays(5), "EXP", "Monatliche Miete", 1);
+            addTransaction(1, java.time.LocalDate.now().minusDays(2), "INC", "Gehaltseingang", 3);
+            addTransaction(3, java.time.LocalDate.now().minusDays(1), "EXP", "Abendessen", 4);
+
+            System.out.println("Dummy test data inserted successfully!");
+        } catch (Exception e) {
+            System.err.println("Error inserting test data: " + e.getMessage());
+        }
+    }
 
     
 }
