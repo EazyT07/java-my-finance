@@ -1,7 +1,8 @@
 package com.financeapp;
 
 public class Category {
-    private  int id;
+
+    private final int id;
     private String name;
 
     public Category(int id, String name) {
@@ -9,16 +10,20 @@ public class Category {
         this.name = name;
     }
 
-    public int getId() { return  id; }
+    public int getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
+    public String getName() {
+        return name;
+    }
 
-    public void setName(String name){
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
     public String toString() {
-        return  this.name;
+        return this.name;
     }
 }

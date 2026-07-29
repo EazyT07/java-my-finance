@@ -1,14 +1,20 @@
 package com.financeapp;
 
+import java.util.Optional;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
-import java.util.Optional;
 
 public class AccountView extends VBox {
 
@@ -58,14 +64,15 @@ public class AccountView extends VBox {
 
     }
 
-    public void refreshAccountList() {
+    public final void refreshAccountList() {
         accountData.setAll(DatabaseManager.getAllAccounts());
     }
 
     private void handleDeleteAccount() {
         Account select = accountListView.getSelectionModel().getSelectedItem();
-        if (select == null)
+        if (select == null) {
             showAlert("Bitte ein Konto auswählen");
+        }
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Konto löschen");
@@ -73,17 +80,18 @@ public class AccountView extends VBox {
         alert.setContentText("Sind Sie sicher?");
 
         Optional<ButtonType> result = alert.showAndWait();
-        if(result.isPresent() && result.get() == ButtonType.OK) {
-            if(DatabaseManager.deleteAccount(select.getId()))
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (DatabaseManager.deleteAccount(select.getId())) {
                 refreshAccountList();
-            else
+            } else {
                 showAlert("Konto konnte nicht gelöscht werden");
+            }
         }
     }
 
     private void handleEditAccount() {
         Account selected = accountListView.getSelectionModel().getSelectedItem();
-        if(selected == null) {
+        if (selected == null) {
             showAlert("Bitte ein Konto auswählen");
             return;
         }
@@ -94,24 +102,28 @@ public class AccountView extends VBox {
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(newName -> {
-            if(!newName.trim().isEmpty()) {
-                if(DatabaseManager.updateAccount(selected.getId(), newName.trim()))
+            if (!newName.trim().isEmpty()) {
+                if (DatabaseManager.updateAccount(selected.getId(), newName.trim())) {
                     refreshAccountList();
-                else
+                } else {
                     showAlert("Fehler beim Ändern");
+                }
             }
         });
     }
 
     private void handleAddAccount() {
         String name = inputField.getText().trim();
-        if(name.isEmpty()) return;
+        if (name.isEmpty()) {
+            return;
+        }
 
         if (DatabaseManager.addAccount(name)) {
             inputField.clear();
             refreshAccountList();
-        } else
+        } else {
             showAlert("Fehler beim Löschen");
+        }
     }
 
     private void showAlert(String content) {

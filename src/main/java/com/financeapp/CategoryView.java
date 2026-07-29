@@ -1,16 +1,23 @@
 package com.financeapp;
 
+import java.util.Optional;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.util.Optional;
-
 public class CategoryView extends VBox {
+
     private final ListView<Category> categoryListView;
     private final ObservableList<Category> categoryData;
     private final TextField inputField;
@@ -71,10 +78,11 @@ public class CategoryView extends VBox {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            if(DatabaseManager.deleteCategory(selected.getId()))
+            if (DatabaseManager.deleteCategory(selected.getId())) {
                 refreshCategoryList();
-            else
+            } else {
                 showAlert("Fehler: Kategorie konnte nicht gelöscht werden");
+            }
         }
     }
 
@@ -92,10 +100,11 @@ public class CategoryView extends VBox {
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(newName -> {
             if (!newName.trim().isEmpty()) {
-                if(DatabaseManager.updateCategory(selected.getId(), newName.trim()))
+                if (DatabaseManager.updateCategory(selected.getId(), newName.trim())) {
                     refreshCategoryList();
-                else
+                } else {
                     showAlert("Fehler beim Ändern");
+                }
             }
         });
 
@@ -103,14 +112,16 @@ public class CategoryView extends VBox {
 
     private void handleAddCategory() {
         String name = inputField.getText().trim();
-        if (name.isEmpty()) return;
+        if (name.isEmpty()) {
+            return;
+        }
 
         if (DatabaseManager.addCategory(name)) {
             inputField.clear();
             refreshCategoryList();
-        }
-        else
+        } else {
             showAlert("Fehler: Kategorie konnte nicht hinzugefügt werden");
+        }
 
     }
 
