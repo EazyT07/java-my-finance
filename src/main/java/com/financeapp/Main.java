@@ -19,7 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-public class Main extends Application{
+public class Main extends Application {
 
     private Stage primaryStage;
     private Label currentDbLabel;
@@ -74,23 +74,23 @@ public class Main extends Application{
         this.currentDbLabel = new Label();
         updateDBLabel();
         // Content Area
-        VBox contentArea = new VBox(15, welcomeLabel, currentDbLabel);
-        contentArea.setAlignment(Pos.CENTER);
-        contentArea.setPadding(new Insets(30));
-        return contentArea;
+        VBox dashboardContent = new VBox(15, welcomeLabel, currentDbLabel);
+        dashboardContent.setAlignment(Pos.CENTER);
+        dashboardContent.setPadding(new Insets(30));
+        return dashboardContent;
     }
 
     private VBox createSidebar() {
-        
+
         VBox sidebar = new VBox(10);
         sidebar.setPadding(new Insets(15));
         sidebar.setPrefWidth(180);
         sidebar.getStyleClass().add("sidebar");
-        
+
         // App Title/Logo Area
         Label appTitle = new Label("Meine Finanzen");
         appTitle.getStyleClass().add("app-title");
-        
+
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
         btnDashboard.setOnAction(e -> setMainContent(dashboardView));
@@ -119,7 +119,7 @@ public class Main extends Application{
         // Account
         Button btnAccounts = createNavButton("🏷️ Konto");
         btnAccounts.setOnAction(e -> {
-            accountView.refreshAccountList();;
+            accountView.refreshAccountList();
             setMainContent(accountView);
         });
 
@@ -162,7 +162,7 @@ public class Main extends Application{
         currentDbLabel.setText("Aktuelle DB: " + dbName);
     }
 
-    private void handleSwitchDatabase()  {
+    private void handleSwitchDatabase() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("DB auswählen");
 
@@ -179,7 +179,7 @@ public class Main extends Application{
             try {
                 DatabaseManager.switchDatabase(selectedFile.getAbsolutePath());
                 reloadDatabaseConnection();
-            } catch ( SQLException e) {
+            } catch (SQLException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Datenbank Fehler");
                 alert.setHeaderText("Fehler beim DB Wechsel");
@@ -200,6 +200,6 @@ public class Main extends Application{
     }
 
     public static void main(String[] args) {
-    launch(args);
+        launch(args);
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 public class SubcategoryDialog extends Dialog<Subcategory> {
 
     private ComboBox<Category> categoryBox;
-    private TextField name;
+    private TextField nameField;
     private Subcategory subcategory;
 
     @SuppressWarnings("exports")
@@ -55,12 +55,12 @@ public class SubcategoryDialog extends Dialog<Subcategory> {
 
         loadCategories();
 
-        name = new TextField();
-        name.setPromptText("Name der Unterkategorie");
+        nameField = new TextField();
+        nameField.setPromptText("Name der Unterkategorie");
 
         // Only pre-fill if we are actually editing an existing subcategory
         if (this.subcategory != null) {
-            name.setText(this.subcategory.getName());
+            nameField.setText(this.subcategory.getName());
             for (Category cat : categoryBox.getItems()) {
                 if (cat.getId() == this.subcategory.getCategoryId()) {
                     categoryBox.setValue(cat);
@@ -72,7 +72,7 @@ public class SubcategoryDialog extends Dialog<Subcategory> {
         grid.add(new Label("Kategorie:"), 0, 0);
         grid.add(categoryBox, 1, 0);
         grid.add(new Label("Name:"), 0, 1);
-        grid.add(name, 1, 1);
+        grid.add(nameField, 1, 1);
 
         getDialogPane().setContent(grid);
 
@@ -80,23 +80,21 @@ public class SubcategoryDialog extends Dialog<Subcategory> {
         checkValidation(saveButton);
 
         categoryBox.valueProperty().addListener((obs, oldVal, newVal) -> checkValidation(saveButton));
-        name.textProperty().addListener((obs, oldVal, newVal) -> checkValidation(saveButton));
+        nameField.textProperty().addListener((obs, oldVal, newVal) -> checkValidation(saveButton));
 
         setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
                 int id = (this.subcategory != null) ? this.subcategory.getId() : 0;
-                return new Subcategory(id, name.getText().trim(), categoryBox.getValue().getId(),
-                        categoryBox.getValue().getName());
+                return new Subcategory(
+                        id,
+                        nameField.getText().trim(),
+                        categoryBox.getValue().getId(),
+                        categoryBox.getValue().getName()
+                );
             }
             return null;
         });
-
     }
-
-    /* 
-    public SubcategoryDialog(Window ownerWindow) {
-        this(ownerWindow, null);
-    }*/
 
     private void loadCategories() {
         List<Category> categories = DatabaseManager.getAllCategories();
@@ -104,8 +102,7 @@ public class SubcategoryDialog extends Dialog<Subcategory> {
     }
 
     private void checkValidation(Node saveButton) {
-        boolean isInvalid = categoryBox.getValue() == null || name.getText().trim().isEmpty();
+        boolean isInvalid = categoryBox.getValue() == null || nameField.getText().trim().isEmpty();
         saveButton.setDisable(isInvalid);
     }
-
 }

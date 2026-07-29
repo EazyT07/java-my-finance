@@ -18,6 +18,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class TransactionView extends VBox {
@@ -113,7 +114,9 @@ public class TransactionView extends VBox {
 
     private void initTableView() {
 
-        transactionTableView.setPrefHeight(250);
+        // Set the TableView to grow vertically
+        VBox.setVgrow(transactionTableView, Priority.ALWAYS);
+        transactionTableView.setMaxHeight(Double.MAX_VALUE);
         // Column: Account Name
         TableColumn<Transaction, String> accountNameColumn = new TableColumn<>("Konto");
         accountNameColumn.setCellValueFactory(new PropertyValueFactory<>("accountName"));

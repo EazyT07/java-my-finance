@@ -2,12 +2,18 @@ package com.financeapp;
 
 import java.util.List;
 import java.util.Optional;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -60,66 +66,20 @@ public class SubcategoryView extends VBox {
         refreshSubcategoryList();
     }
 
-    public void refreshCategoryDropdown() {
+    public final void refreshCategoryDropdown() {
         List<Category> categories = DatabaseManager.getAllCategories();
         categoryComboBox.setItems(FXCollections.observableArrayList(categories));
     }
 
-    public void refreshSubcategoryList() {
+    public final void refreshSubcategoryList() {
         subcategoryData.setAll(DatabaseManager.getAllSubcategories());
     }
 
     private void handleAddSubcategory() {
-
-        // Create the dialog
-        Dialog<Subcategory> dialog = new Dialog<>();
-        dialog.setTitle("Neue Unterkategorie");
-        dialog.setHeaderText("Unterkategorie erstellen");
-        dialog.initOwner(getScene().getWindow());
-
-        // 2. Set the button types (Save and Cancel)
-        ButtonType saveButtonType = new ButtonType("Speichern", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
-
-        // 3. Create the layout and inputs for the dialog
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        ComboBox<Category> dialogCategoryBox = new ComboBox<>();
-        dialogCategoryBox.setPromptText("Kategorie wählen...");
-        dialogCategoryBox.setItems(categoryComboBox.getItems());
-
-        TextField dialogNameField = new TextField();
-        dialogNameField.setPromptText("Name der Unterkategorie");
-
-        grid.add(new Label("Kategorie:"), 0, 0);
-        grid.add(dialogCategoryBox, 1, 0);
-        grid.add(new Label("Name:"), 0, 1);
-        grid.add(dialogNameField, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        // 4. Optional: Disable save button until fields are filled
-        javafx.scene.Node saveButton = dialog.getDialogPane().lookupButton(saveButtonType);
-        saveButton.setDisable(true);
-
-        dialogCategoryBox.valueProperty().addListener((obs, oldVal, newVal) -> saveButton
-                .setDisable(newVal == null || dialogNameField.getText().trim().isEmpty()));
-        dialogNameField.textProperty().addListener((obs, oldVal, newVal) -> saveButton
-                .setDisable(dialogCategoryBox.getValue() == null || newVal.trim().isEmpty()));
-
-        // 5. Convert the result when "Save" is clicked
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                return new Subcategory(0, dialogNameField.getText().trim(), dialogCategoryBox.getValue().getId(), "");
-            }
-            return null;
-        });
-
-        // 6. Show the dialog and handle the database save
+        // Use the SubcategoryDialog, passing null for a new entry
+        SubcategoryDialog dialog = new SubcategoryDialog(getScene().getWindow(), null);
         Optional<Subcategory> result = dialog.showAndWait();
+
         result.ifPresent(newSub -> {
             if (DatabaseManager.addSubcategory(newSub.getName(), newSub.getCategoryId())) {
                 refreshSubcategoryList();
@@ -137,14 +97,15 @@ public class SubcategoryView extends VBox {
             return;
         }
 
-        // Open Dialog
+        // Open Dialog, passing the selected subcategory to edit
         SubcategoryDialog dialog = new SubcategoryDialog(getScene().getWindow(), selectedSub);
         Optional<Subcategory> result = dialog.showAndWait();
         result.ifPresent(updateSub -> {
-            if (DatabaseManager.updateSubcategory(updateSub.getId(), updateSub.getName(), updateSub.getCategoryId()))
+            if (DatabaseManager.updateSubcategory(updateSub.getId(), updateSub.getName(), updateSub.getCategoryId())) {
                 refreshSubcategoryList();
-            else
+            } else {
                 showAlert("Fehler beim Ändern");
+            }
         });
     }
 
