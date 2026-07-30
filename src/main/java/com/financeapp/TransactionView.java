@@ -1,5 +1,9 @@
 package com.financeapp;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -7,22 +11,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.stream.Collectors;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -31,10 +25,25 @@ import javafx.stage.FileChooser;
 
 public class TransactionView extends VBox {
 
-    private final ComboBox<Account> accountComboBox;
-    private final ComboBox<Subcategory> subcatComboBox;
+    // Basic Controls
     private final TableView<Transaction> transactionTableView;
     private final ObservableList<Transaction> transactionData;
+    private final ObservableList<Transaction> allTransactionsMasterList;
+    private final ComboBox<Account> accountComboBox;
+    private final ComboBox<Category> categoryComboBox;
+    private final ComboBox<Subcategory> subcatComboBox;
+
+    // Filter Controls
+    private final ComboBox<Account> filterAccountBox;
+    private final DatePicker filterDateFrom;
+    private final DatePicker filterDateTo;
+    private final ComboBox<Category> filterCategoryBox;
+    private final ComboBox<Subcategory> filterSubcatBox;
+    private final TextField filterDescriptionField;
+
+    // Balance Info Labels
+    private final Label labelOpenBalance;
+    private final Label labelCloseBalance;
 
     public TransactionView() {
 
@@ -42,14 +51,66 @@ public class TransactionView extends VBox {
         setPadding(new Insets(20));
 
         accountComboBox = new ComboBox<>();
+        categoryComboBox = new ComboBox<>();
         subcatComboBox = new ComboBox<>();
 
         // Header
         Label headerLabel = new Label("Transaktionen");
         headerLabel.getStyleClass().add("label");
 
+        // Filter Panel Setup
+        // --------------------
+        // Account
+        filterAccountBox = new ComboBox<>();
+        filterAccountBox.setPromptText("Konto...");
+        filterAccountBox.setOnAction(e -> applyFilters());
+
+        // Dates
+        filterDateFrom = new DatePicker();
+        filterDateFrom.setPromptText("Datum von");
+        filterDateFrom.setOnAction(e -> applyFilters());
+        filterDateTo = new DatePicker();
+        filterDateTo.setPromptText("Datum bis");
+        filterDateTo.setOnAction(e -> applyFilters());
+
+        // Category
+        filterCategoryBox = new ComboBox<>();
+        filterCategoryBox.setPromptText("Kategorie...");
+        filterCategoryBox.setOnAction(e -> {
+            updateSubcategoryFilterDropdown();
+            applyFilters();
+        });
+        // Subcategory Dropdown
+        filterSubcatBox = new ComboBox<>();
+        filterSubcatBox.setPromptText("Unterkategorie...");
+        filterSubcatBox.setOnAction(e -> applyFilters());
+
+        // Description
+        filterDescriptionField = new TextField();
+        filterDescriptionField.setPromptText("Beschreibung...");
+        filterDescriptionField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
+
+        // Filter Reset Button
+        Button btnResetFilter = new Button("Filter zurücksetzen");
+        btnResetFilter.setOnAction(e -> resetFilters());
+
+        // Box Layouts
+        HBox filterBarTop = new HBox(10, filterAccountBox, filterDateFrom, filterDateTo);
+        HBox filterBarBottom = new HBox(10, filterSubcatBox, filterDescriptionField, btnResetFilter);
+        VBox filterPanel = new VBox(10, new Label("Filter"), filterBarTop, filterBarBottom);
+        filterPanel.setPadding(new Insets(10));
+        filterPanel.getStyleClass().add("filter-panel");
+
+        // Balance Info Panel
+        labelOpenBalance = new Label("0,00 €");
+        labelCloseBalance = new Label("0,00 €");
+        HBox balanceBox = new HBox(20,
+                new Label("Anfangssaldo:"), labelOpenBalance,
+                new Label("Endsaldo:"), labelCloseBalance);
+
         // Transaction Table
         // -------------------
+        allTransactionsMasterList = FXCollections.observableArrayList();
         transactionData = FXCollections.observableArrayList();
         transactionTableView = new TableView<>(transactionData);
         initTableView();
@@ -67,12 +128,105 @@ public class TransactionView extends VBox {
         HBox inputArea = new HBox(10, btnAdd, btnEdit, btnDelete, btnImport);
 
         // Add everything to the VBox
-        getChildren().addAll(headerLabel, inputArea, transactionTableView);
+        getChildren().addAll(headerLabel, filterPanel, balanceBox, inputArea, transactionTableView);
 
-        // Intial Data Load
-        refreshAccountDropdown();
-        refreshSubcategoryDropdown();
+    }
 
+    private final void resetFilters() {
+        filterAccountBox.setValue(null);
+        filterDateFrom.setValue(null);
+        filterDateTo.setValue(null);
+        filterCategoryBox.setValue(null);
+        filterSubcatBox.setValue(null);
+        filterDescriptionField.clear();
+        applyFilters();
+    }
+
+    private final void updateSubcategoryFilterDropdown() {
+        // TODO Auto-generated method stub
+    }
+
+    private final void applyFilters() {
+        // Read Filter Values
+        Account selectedAccount = filterAccountBox.getValue();
+        LocalDate dateFrom = filterDateFrom.getValue();
+        LocalDate dateTo = filterDateTo.getValue();
+        Category selectedCategory = filterCategoryBox.getValue();
+        Subcategory selectedSubcat = filterSubcatBox.getValue();
+        String descQuery = filterDescriptionField.getText().toLowerCase().trim();
+
+        // Filter Table Data
+        List<Transaction> filteredList = allTransactionsMasterList.stream().filter(t -> {
+            if (selectedAccount != null && t.getAccountId() != selectedAccount.getId())
+                return false;
+            if (dateFrom != null && t.getDate().isBefore(dateFrom))
+                return false;
+            if (dateTo != null && t.getDate().isAfter(dateTo))
+                return false;
+            if (selectedCategory != null) {
+                // Find subcategory to check its category, or check if transaction matches
+                // category
+                Subcategory sub = DatabaseManager.getAllSubcategories().stream()
+                        .filter(s -> s.getId() == t.getSubcategoryId()).findFirst().orElse(null);
+                if (sub == null || sub.getCategoryId() != selectedCategory.getId())
+                    return false;
+            }
+            if (selectedSubcat != null && t.getSubcategoryId() != selectedSubcat.getId())
+                return false;
+            if (!descQuery.isEmpty() && !t.getDescription().toLowerCase().contains(descQuery))
+                return false;
+            return true;
+        }).collect(Collectors.toList());
+
+        transactionData.setAll(filteredList);
+
+        // Calculate Balances (Account & Date From dependent)
+        calculateBalances(selectedAccount, dateFrom, dateTo);
+    }
+
+    private void calculateBalances(Account account, LocalDate dateFrom, LocalDate dateTo) {
+        if (account == null) {
+            labelOpenBalance.setText("-");
+            labelCloseBalance.setText("-");
+            return;
+        }
+
+        BigDecimal openingBalance = new BigDecimal("0.00");
+
+        // 2. Determine the threshold date. If no "Date From" is selected, opening
+        // balance is just the initial balance.
+        LocalDate thresholdDateFrom = dateFrom;
+
+        // Loop through ALL master transactions to calculate what happened BEFORE the
+        // dateFrom filter
+        for (Transaction t : allTransactionsMasterList) {
+            if (t.getAccountId() == account.getId()) {
+                BigDecimal amountVal = "INC".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
+
+                // If a "Date From" filter is set, any transaction strictly BEFORE that date
+                // builds the opening balance
+                if (thresholdDateFrom != null && t.getDate().isBefore(thresholdDateFrom)) {
+                    openingBalance = openingBalance.add(amountVal);
+                }
+            }
+        }
+
+        // 3. Closing balance is the opening balance PLUS all transactions that fall
+        // WITHIN the active filter period (from transactionData)
+        BigDecimal periodChange = BigDecimal.ZERO;
+        for (Transaction t : transactionData) {
+            if (t.getAccountId() == account.getId()) {
+                BigDecimal amountVal = "INC".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
+                periodChange = periodChange.add(amountVal);
+            }
+        }
+
+        BigDecimal closingBalance = openingBalance.add(periodChange);
+
+        // Format and display
+        NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+        labelOpenBalance.setText(germanFormat.format(openingBalance));
+        labelCloseBalance.setText(germanFormat.format(closingBalance));
     }
 
     private void handleImportCsv() {
@@ -84,8 +238,9 @@ public class TransactionView extends VBox {
                 new FileChooser.ExtensionFilter("CSV Dateien (*.csv)", "*.csv"));
 
         File selectedFile = fileChooser.showOpenDialog(getScene().getWindow());
-        if (selectedFile == null)
+        if (selectedFile == null) {
             return;
+        }
 
         int importedCount = 0;
         int errorCount = 0;
@@ -97,8 +252,9 @@ public class TransactionView extends VBox {
             boolean isFirstLine = true;
 
             while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty())
+                if (line.trim().isEmpty()) {
                     continue;
+                }
 
                 String[] parts = line.split(";");
                 // Skip first line or header line
@@ -181,11 +337,55 @@ public class TransactionView extends VBox {
     }
 
     private void handleDeleteTransaction() {
+        Transaction selectedTransatcion = transactionTableView.getSelectionModel().getSelectedItem();
+
+        if (selectedTransatcion == null) {
+            showAlert("Bitte eine Transation selektieren");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Transaktion wirklich löschen?",
+                ButtonType.YES, ButtonType.NO);
+
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.YES) {
+            if (DatabaseManager.deleteTransaction(selectedTransatcion.getId())) {
+                refreshTransactionList();
+            } else {
+                showAlert("Fehler: Transaktion konnte nicht gelöscht werden.");
+            }
+        }
 
     }
 
     private void handleEditTransaction() {
+        Transaction selectedTransaction = transactionTableView.getSelectionModel().getSelectedItem();
 
+        if (selectedTransaction == null) {
+            showAlert("Bitte Transaktion auswählen");
+            return;
+        }
+
+        // Open Dialog, passing the selected transaction to edit
+        TransactionDialog dialog = new TransactionDialog(getScene().getWindow(), selectedTransaction);
+        Optional<Transaction> result = dialog.showAndWait();
+        result.ifPresent(updateTransaction -> {
+            boolean success = DatabaseManager.updateTransaction(
+                    updateTransaction.getId(),
+                    updateTransaction.getAccountId(),
+                    updateTransaction.getDate(),
+                    updateTransaction.getType(),
+                    updateTransaction.getDescription(),
+                    updateTransaction.getSubcategoryId(),
+                    updateTransaction.getAmount());
+            if (success) {
+                refreshTransactionList();
+            } else {
+                showAlert("Fehler: Transaktion konnte nicht aktualisiert werden.");
+            }
+        });
     }
 
     private void handleAddTransaction() {
@@ -216,18 +416,25 @@ public class TransactionView extends VBox {
         alert.showAndWait();
     }
 
-    public final void refreshAccountDropdown() {
+    public final void refreshDropdowns() {
+        // Accounts
         List<Account> accounts = DatabaseManager.getAllAccounts();
         accountComboBox.setItems(FXCollections.observableArrayList(accounts));
-    }
-
-    public final void refreshSubcategoryDropdown() {
+        filterAccountBox.setItems(FXCollections.observableArrayList(accounts));
+        // Category
+        List<Category> categories = DatabaseManager.getAllCategories();
+        categoryComboBox.setItems(FXCollections.observableArrayList(categories));
+        filterCategoryBox.setItems(FXCollections.observableArrayList(categories));
+        // Subcategory
         List<Subcategory> subcategories = DatabaseManager.getAllSubcategories();
         subcatComboBox.setItems(FXCollections.observableArrayList(subcategories));
+        filterSubcatBox.setItems(FXCollections.observableArrayList(subcategories));
     }
 
     public void refreshTransactionList() {
-        transactionData.setAll(DatabaseManager.getAllTransactions());
+        allTransactionsMasterList.setAll(DatabaseManager.getAllTransactions());
+        refreshDropdowns();
+        applyFilters();
     }
 
     private void initTableView() {

@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 public class DatabaseManager {
-    
+
     private static final String PREF_KEY_DB_PATH = "last_selected_db_path";
     private static final Preferences prefs = Preferences.userNodeForPackage(DatabaseManager.class);
     private static Connection activeConnection = null;
-    
+
     public static String getDatabasePath() {
         String defaultPath = System.getProperty("user.home")
                 + File.separator + ".myfinance"
@@ -31,7 +31,7 @@ public class DatabaseManager {
     }
 
     @SuppressWarnings("exports")
-    public static synchronized Connection getConnection() throws  SQLException {
+    public static synchronized Connection getConnection() throws SQLException {
         if (activeConnection == null || activeConnection.isClosed()) {
             activeConnection = createNewConnection(getDatabasePath());
         }
@@ -41,7 +41,7 @@ public class DatabaseManager {
     private static Connection createNewConnection(String databasePath) throws SQLException {
         File dbFile = new File(databasePath);
 
-        if(dbFile.getParentFile() != null && !dbFile.getParentFile().exists()) {
+        if (dbFile.getParentFile() != null && !dbFile.getParentFile().exists()) {
             dbFile.getParentFile().mkdirs();
         }
         String dbUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
@@ -67,7 +67,7 @@ public class DatabaseManager {
                     activeConnection.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                System.err.println("Error closing connection: " + e.getMessage());
             } finally {
                 activeConnection = null;
             }
@@ -81,14 +81,14 @@ public class DatabaseManager {
                     name TEXT NOT NULL
                 );
                 """;
-        
+
         String createCategorySQL = """
                 CREATE TABLE IF NOT EXISTS Category (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL
                 );
                 """;
-        
+
         String createSubCategorySQL = """
                 CREATE TABLE IF NOT EXISTS Subcategory (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,7 +111,7 @@ public class DatabaseManager {
                     CHECK (type IN ('INC', 'EXP'))
                 );
                 """;
-        try ( Statement stmt = getConnection().createStatement() ) {
+        try (Statement stmt = getConnection().createStatement()) {
             // Create all tables
             stmt.execute(createAccountSQL);
             stmt.execute(createCategorySQL);
@@ -126,27 +126,24 @@ public class DatabaseManager {
     ---------------------------
     CRUD Operations - Account
     ---------------------------
-    */
+     */
     public static List<Account> getAllAccounts() {
         List<Account> accounts = new ArrayList<>();
         String sql = "SELECT id, name FROM ACCOUNT ORDER BY name ASC";
         try (
-                Statement stmt = getConnection().createStatement();
-                ResultSet rs = stmt.executeQuery(sql);
-            ) {
+                Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql);) {
             while (rs.next()) {
                 accounts.add(new Account(rs.getInt("id"), rs.getString("name")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error retrieving accounts: " + e.getMessage());
         }
-        return  accounts;
+        return accounts;
     }
 
-    public static boolean addAccount(String name){
+    public static boolean addAccount(String name) {
         String sql = "INSERT INTO Account(name) VALUES(?)";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.executeUpdate();
             return true;
@@ -157,10 +154,9 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean updateAccount(int id, String name){
+    public static boolean updateAccount(int id, String name) {
         String sql = "UPDATE Account SET NAME = ? WHERE id =?";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setInt(2, id);
             pstmt.executeUpdate();
@@ -172,10 +168,9 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean deleteAccount(int id){
+    public static boolean deleteAccount(int id) {
         String sql = "DELETE FROM Account WHERE id =?";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
             return true;
@@ -185,32 +180,29 @@ public class DatabaseManager {
             return false;
         }
     }
-    
+
     /*
     ---------------------------
     CRUD Operations - Category
     ---------------------------
-    */
+     */
     public static List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT id, name FROM CATEGORY ORDER BY name ASC";
         try (
-                Statement stmt = getConnection().createStatement();
-                ResultSet rs = stmt.executeQuery(sql);
-            ) {
+                Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql);) {
             while (rs.next()) {
                 categories.add(new Category(rs.getInt("id"), rs.getString("name")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error retrieving categories: " + e.getMessage());
         }
-        return  categories;
+        return categories;
     }
 
-    public static boolean addCategory(String name){
+    public static boolean addCategory(String name) {
         String sql = "INSERT INTO Category(name) VALUES(?)";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.executeUpdate();
             return true;
@@ -221,10 +213,9 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean updateCategory(int id, String name){
+    public static boolean updateCategory(int id, String name) {
         String sql = "UPDATE Category SET NAME = ? WHERE id =?";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setInt(2, id);
             pstmt.executeUpdate();
@@ -236,10 +227,9 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean deleteCategory(int id){
+    public static boolean deleteCategory(int id) {
         String sql = "DELETE FROM Category WHERE id =?";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
             return true;
@@ -254,7 +244,7 @@ public class DatabaseManager {
     ------------------------------
     CRUD Operations - Subcategory
     ------------------------------
-    */
+     */
     public static List<Subcategory> getAllSubcategories() {
         List<Subcategory> subcategories = new ArrayList<>();
         String sql = """
@@ -263,13 +253,13 @@ public class DatabaseManager {
             JOIN Category c ON s.category_id = c.id
             ORDER BY s.name ASC
         """;
-        
+
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     subcategories.add(new Subcategory(
-                            rs.getInt("id"), 
-                            rs.getString("name"), 
+                            rs.getInt("id"),
+                            rs.getString("name"),
                             rs.getInt("category_id"),
                             rs.getString("cat_name")
                     ));
@@ -284,14 +274,14 @@ public class DatabaseManager {
     public static List<Subcategory> getSubcategoriesByCategory(int categoryId) {
         List<Subcategory> subcategories = new ArrayList<>();
         String sql = "SELECT id, name, category_id FROM Subcategory WHERE category_id = ? ORDER BY name ASC";
-        
+
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setInt(1, categoryId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     subcategories.add(new Subcategory(
-                            rs.getInt("id"), 
-                            rs.getString("name"), 
+                            rs.getInt("id"),
+                            rs.getString("name"),
                             rs.getInt("category_id"),
                             rs.getString("c.name")
                     ));
@@ -346,8 +336,7 @@ public class DatabaseManager {
     ------------------------------
     CRUD Operations - Transaction
     ------------------------------
-    */
-
+     */
     public static List<Transaction> getAllTransactions() {
         List<Transaction> transactions = new ArrayList<>();
         String sql = """
@@ -361,13 +350,13 @@ public class DatabaseManager {
             JOIN Category c ON s.category_id = c.id
             ORDER BY t.date ASC
         """;
-        
+
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     transactions.add(new Transaction(
-                            rs.getInt("id"), 
-                            rs.getInt("account_id"), 
+                            rs.getInt("id"),
+                            rs.getInt("account_id"),
                             rs.getString("acc_name"),
                             rs.getDate("date") != null ? rs.getDate("date").toLocalDate() : null,
                             rs.getString("type"),
@@ -386,7 +375,7 @@ public class DatabaseManager {
     }
 
     public static boolean addTransaction(int accountId, LocalDate date, String type,
-                                         String description, int subcategoryId, BigDecimal amount) {
+            String description, int subcategoryId, BigDecimal amount) {
         String sql = """
                 INSERT INTO AppTransaction(account_id, date, type, description, subcategory_id, amount)
                 VALUES(?, ?, ?, ?, ?, ?)
@@ -408,10 +397,10 @@ public class DatabaseManager {
     }
 
     public static boolean updateTransaction(int id, int accountId, LocalDate date, String type,
-                                            String description, int subcategoryId, BigDecimal amount) {
+            String description, int subcategoryId, BigDecimal amount) {
         String sql = """
                      UPDATE AppTransaction
-                     SET account_id = ?, date = ?, type = ?, description = ?, subcategory_id = ?
+                     SET account_id = ?, date = ?, type = ?, description = ?, subcategory_id = ?, amount = ?
                      WHERE id = ?
                      """;
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
@@ -420,8 +409,8 @@ public class DatabaseManager {
             pstmt.setString(3, type);
             pstmt.setString(4, description);
             pstmt.setInt(5, subcategoryId);
-            pstmt.setInt(6, id);
-            pstmt.setBigDecimal(7, amount);
+            pstmt.setBigDecimal(6, amount);
+            pstmt.setInt(7, id);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -430,10 +419,9 @@ public class DatabaseManager {
         }
     }
 
-    public static boolean deleteTransaction(int id){
+    public static boolean deleteTransaction(int id) {
         String sql = "DELETE FROM AppTransaction WHERE id =?";
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql))
-        {
+        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
             return true;
@@ -473,5 +461,4 @@ public class DatabaseManager {
         }
     }
 
-    
 }

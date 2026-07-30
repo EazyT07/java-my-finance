@@ -62,7 +62,7 @@ public class CategoryView extends VBox {
         refreshCategoryList();
     }
 
-    public void refreshCategoryList() {
+    public final void refreshCategoryList() {
         categoryData.setAll(DatabaseManager.getAllCategories());
     }
 
@@ -70,6 +70,7 @@ public class CategoryView extends VBox {
         Category selected = categoryListView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Bitte eine Kategorie auswählen");
+            return;
         }
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Kategorie Löschen");

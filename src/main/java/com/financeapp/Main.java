@@ -193,6 +193,8 @@ public class Main extends Application {
         updateDBLabel();
         categoryView.refreshCategoryList();
         subcategoryView.refreshSubcategoryList();
+        accountView.refreshAccountList();
+        transactionView.refreshTransactionList();
     }
 
     private void setMainContent(javafx.scene.Node node) {
