@@ -28,17 +28,16 @@ public class TransactionView extends VBox {
     // Basic Controls
     private final TableView<Transaction> transactionTableView;
     private final ObservableList<Transaction> transactionData;
-    private final ObservableList<Transaction> allTransactionsMasterList;
+    private final ObservableList<Transaction> transactionsDataAll;
     private final ComboBox<Account> accountComboBox;
-    private final ComboBox<Category> categoryComboBox;
     private final ComboBox<Subcategory> subcatComboBox;
 
     // Filter Controls
     private final ComboBox<Account> filterAccountBox;
-    private final DatePicker filterDateFrom;
-    private final DatePicker filterDateTo;
     private final ComboBox<Category> filterCategoryBox;
     private final ComboBox<Subcategory> filterSubcatBox;
+    private final DatePicker filterDateFrom;
+    private final DatePicker filterDateTo;
     private final TextField filterDescriptionField;
 
     // Balance Info Labels
@@ -51,7 +50,6 @@ public class TransactionView extends VBox {
         setPadding(new Insets(20));
 
         accountComboBox = new ComboBox<>();
-        categoryComboBox = new ComboBox<>();
         subcatComboBox = new ComboBox<>();
 
         // Header
@@ -77,7 +75,7 @@ public class TransactionView extends VBox {
         filterCategoryBox = new ComboBox<>();
         filterCategoryBox.setPromptText("Kategorie...");
         filterCategoryBox.setOnAction(e -> {
-            updateSubcategoryFilterDropdown();
+            updateSubCategoryDropdown();
             applyFilters();
         });
         // Subcategory Dropdown
@@ -96,7 +94,7 @@ public class TransactionView extends VBox {
 
         // Box Layouts
         HBox filterBarTop = new HBox(10, filterAccountBox, filterDateFrom, filterDateTo);
-        HBox filterBarBottom = new HBox(10, filterSubcatBox, filterDescriptionField, btnResetFilter);
+        HBox filterBarBottom = new HBox(10, filterSubcatBox, filterDescriptionField, filterCategoryBox, btnResetFilter);
         VBox filterPanel = new VBox(10, new Label("Filter"), filterBarTop, filterBarBottom);
         filterPanel.setPadding(new Insets(10));
         filterPanel.getStyleClass().add("filter-panel");
@@ -110,7 +108,7 @@ public class TransactionView extends VBox {
 
         // Transaction Table
         // -------------------
-        allTransactionsMasterList = FXCollections.observableArrayList();
+        transactionsDataAll = FXCollections.observableArrayList();
         transactionData = FXCollections.observableArrayList();
         transactionTableView = new TableView<>(transactionData);
         initTableView();
@@ -142,12 +140,29 @@ public class TransactionView extends VBox {
         applyFilters();
     }
 
-    private final void updateSubcategoryFilterDropdown() {
-        // TODO Auto-generated method stub
+    private final void updateSubCategoryDropdown() {
+
+        Category selectedCategory = filterCategoryBox.getValue();
+
+        if (selectedCategory != null) {
+            // 1. Filter subcategories for this category
+            List<Subcategory> filteredSubcats = DatabaseManager.getAllSubcategories().stream()
+                    .filter(s -> s.getCategoryId() == selectedCategory.getId())
+                    .collect(Collectors.toList());
+            filterSubcatBox.setItems(FXCollections.observableArrayList(filteredSubcats));
+        } else {
+            // 2. If category is cleared, show all subcategories
+            List<Subcategory> allSubcats = DatabaseManager.getAllSubcategories();
+            filterSubcatBox.setItems(FXCollections.observableArrayList(allSubcats));
+        }
+
+        // 3. Always clear the subcategory selection when category changes
+        filterSubcatBox.setValue(null);
     }
 
     private final void applyFilters() {
         // Read Filter Values
+        // --------------------
         Account selectedAccount = filterAccountBox.getValue();
         LocalDate dateFrom = filterDateFrom.getValue();
         LocalDate dateTo = filterDateTo.getValue();
@@ -156,7 +171,8 @@ public class TransactionView extends VBox {
         String descQuery = filterDescriptionField.getText().toLowerCase().trim();
 
         // Filter Table Data
-        List<Transaction> filteredList = allTransactionsMasterList.stream().filter(t -> {
+        // -------------------
+        List<Transaction> filteredList = transactionsDataAll.stream().filter(t -> {
             if (selectedAccount != null && t.getAccountId() != selectedAccount.getId())
                 return false;
             if (dateFrom != null && t.getDate().isBefore(dateFrom))
@@ -199,7 +215,7 @@ public class TransactionView extends VBox {
 
         // Loop through ALL master transactions to calculate what happened BEFORE the
         // dateFrom filter
-        for (Transaction t : allTransactionsMasterList) {
+        for (Transaction t : transactionsDataAll) {
             if (t.getAccountId() == account.getId()) {
                 BigDecimal amountVal = "INC".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
 
@@ -421,18 +437,17 @@ public class TransactionView extends VBox {
         List<Account> accounts = DatabaseManager.getAllAccounts();
         accountComboBox.setItems(FXCollections.observableArrayList(accounts));
         filterAccountBox.setItems(FXCollections.observableArrayList(accounts));
-        // Category
-        List<Category> categories = DatabaseManager.getAllCategories();
-        categoryComboBox.setItems(FXCollections.observableArrayList(categories));
-        filterCategoryBox.setItems(FXCollections.observableArrayList(categories));
         // Subcategory
         List<Subcategory> subcategories = DatabaseManager.getAllSubcategories();
         subcatComboBox.setItems(FXCollections.observableArrayList(subcategories));
         filterSubcatBox.setItems(FXCollections.observableArrayList(subcategories));
+        // Category
+        List<Category> categories = DatabaseManager.getAllCategories();
+        filterCategoryBox.setItems(FXCollections.observableArrayList(categories));
     }
 
     public void refreshTransactionList() {
-        allTransactionsMasterList.setAll(DatabaseManager.getAllTransactions());
+        transactionsDataAll.setAll(DatabaseManager.getAllTransactions());
         refreshDropdowns();
         applyFilters();
     }
