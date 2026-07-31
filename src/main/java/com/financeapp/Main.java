@@ -28,6 +28,7 @@ public class Main extends Application {
     private SubcategoryView subcategoryView;
     private AccountView accountView;
     private TransactionView transactionView;
+    private AnalysisView analysisView;
     private VBox dashboardView;
 
     @SuppressWarnings("exports")
@@ -46,6 +47,7 @@ public class Main extends Application {
         subcategoryView = new SubcategoryView();
         accountView = new AccountView();
         transactionView = new TransactionView();
+        analysisView = new AnalysisView();
 
         // Setup Content Area Container
         contentArea = new StackPane();
@@ -94,6 +96,13 @@ public class Main extends Application {
         // Navigation Buttons
         Button btnDashboard = createNavButton("📊 Übersicht");
         btnDashboard.setOnAction(e -> setMainContent(dashboardView));
+        // Analysis
+        Button btnAnalysis = createNavButton("📊 Analyse");
+        btnAnalysis.setOnAction(e -> {
+            analysisView.refreshAnalysisList();
+            setMainContent(analysisView);
+    });
+        
         // Transactions
         Button btnTransactions = createNavButton("💳 Transaktionen");
         btnTransactions.setOnAction(e -> {
@@ -136,6 +145,7 @@ public class Main extends Application {
                 appTitle,
                 new Separator(),
                 btnDashboard,
+                btnAnalysis,
                 btnTransactions,
                 mdSeparator,
                 mdLabel,

@@ -8,6 +8,9 @@ dependency-reduced-pom.xml
 ### DB Files ###
 *.db
 
+### Excalidraw ###
+*.excalidraw
+
 ### IDEA Files ###
 .idea/
 .idea/modules.xml
