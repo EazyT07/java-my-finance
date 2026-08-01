@@ -1,6 +1,5 @@
 package com.financeapp;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,11 +10,36 @@ import java.util.TreeSet;
 public class AnalysisEngine {
 
     public enum RowDimension {
-        CATEGORY, SUBCATEGORY
+        CATEGORY("Nur Kategorie"),
+        CATEGORY_AND_SUBCATEGORY("Kategorie & Subkategorie"),
+        SUBCATEGORY("Nur Subkategorie");
+
+        private final String label;
+
+        RowDimension(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label; // Displays user-friendly labels in the ComboBox dropdown
+        }
     }
 
     public enum ColumnDimension {
-        YEAR, MONTH
+        YEAR("Jahr"),
+        MONTH("Monat");
+
+        private final String label;
+
+        ColumnDimension(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     public static AggregationResult aggregate(
@@ -27,34 +51,38 @@ public class AnalysisEngine {
         Set<String> dynamicColumnKeys = new TreeSet<>();
 
         for (Transaction t : transactions) {
-
-            String catName = t.getCategoryName();
+            String catName = t.getCategoryName() != null ? t.getCategoryName() : "Ohne Kategorie";
             String subcatName = t.getSubcategoryName();
 
-            // Determine Unique Row Key (e.g. Subcategory Name)
-            String rowKey = (rowDim == RowDimension.CATEGORY)
-                    ? catName + " - " + subcatName
-                    : (subcatName != null ? subcatName : "Ohne Subkategorie");
+            String rowKey;
+            PivotRow row;
 
-            // Determine and add Column Key
-            String colKey = extractColumnKey(t, colDim);
-            if (colDim.equals(ColumnDimension.YEAR) || colDim.equals(ColumnDimension.MONTH)) {
-                dynamicColumnKeys.add(colKey);
+            // Grouping logic based on selected row dimension
+            switch (rowDim) {
+                case CATEGORY -> {
+                    rowKey = catName;
+                    row = rowMap.computeIfAbsent(rowKey, k -> new PivotRow(catName, null));
+                }
+                case CATEGORY_AND_SUBCATEGORY -> {
+                    rowKey = catName + " - " + (subcatName != null ? subcatName : "Ohne Subkategorie");
+                    row = rowMap.computeIfAbsent(rowKey, k -> new PivotRow(catName, subcatName));
+                }
+                case SUBCATEGORY -> {
+                    rowKey = subcatName != null ? subcatName : "Ohne Subkategorie";
+                    row = rowMap.computeIfAbsent(rowKey, k -> new PivotRow(null, rowKey));
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + rowDim);
             }
 
-            // Construct PivotRow with BOTH category & subcategory names explicitly
-            PivotRow row = rowMap.computeIfAbsent(rowKey, k -> new PivotRow(catName, subcatName));
+            // Determine dynamic column key (Year or Month)
+            String colKey = extractColumnKey(t, colDim);
+            dynamicColumnKeys.add(colKey);
+
+            // Accumulate transaction amount into the row
             row.addAmount(colKey, t.getAmount());
         }
 
         return new AggregationResult(new ArrayList<>(rowMap.values()), new ArrayList<>(dynamicColumnKeys));
-    }
-
-    private static String extractRowKey(Transaction t, RowDimension dim) {
-        return switch (dim) {
-            case CATEGORY -> t.getCategoryName();
-            case SUBCATEGORY -> t.getSubcategoryName();
-        };
     }
 
     private static String extractColumnKey(Transaction t, ColumnDimension dim) {
@@ -64,7 +92,6 @@ public class AnalysisEngine {
         };
     }
 
-    // Helper Record to hold both rows and detected column keys
     public record AggregationResult(List<PivotRow> rows, List<String> columnKeys) {
     }
 }
