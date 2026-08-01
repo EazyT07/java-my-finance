@@ -8,15 +8,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-
 public class AnalysisEngine {
 
     public enum RowDimension {
-        CATEGORY, SUBCATEGORY, ACCOUNT
+        CATEGORY, SUBCATEGORY
     }
 
     public enum ColumnDimension {
-        NONE, YEAR, MONTH
+        YEAR, MONTH
     }
 
     public static AggregationResult aggregate(
@@ -35,7 +34,7 @@ public class AnalysisEngine {
             String colKey = extractColumnKey(t, colDim);
 
             // Track unique columns
-            if (!colDim.equals(ColumnDimension.NONE)) {
+            if (colDim.equals(ColumnDimension.YEAR) || colDim.equals(ColumnDimension.MONTH)) {
                 dynamicColumnKeys.add(colKey);
             }
 
@@ -47,12 +46,10 @@ public class AnalysisEngine {
         return new AggregationResult(new ArrayList<>(rowMap.values()), new ArrayList<>(dynamicColumnKeys));
     }
 
-    
     private static String extractRowKey(Transaction t, RowDimension dim) {
         return switch (dim) {
-            case CATEGORY -> "1"; //TODO: DatabaseManager.getCategoryNameById("1");
-            case SUBCATEGORY -> "2"; //TODO: DatabaseManager.getSubcategoryNameById(t.getSubcategoryId());
-            case ACCOUNT -> "3"; //TODO: DatabaseManager.getAccountNameById(t.getAccountId());
+            case CATEGORY -> t.getCategoryName();
+            case SUBCATEGORY -> t.getSubcategoryName();
         };
     }
 
@@ -60,7 +57,6 @@ public class AnalysisEngine {
         return switch (dim) {
             case YEAR -> String.valueOf(t.getDate().getYear());
             case MONTH -> t.getDate().getYear() + "-" + String.format("%02d", t.getDate().getMonthValue());
-            case NONE -> "Gesamt";
         };
     }
 

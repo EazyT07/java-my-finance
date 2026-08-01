@@ -6,6 +6,7 @@ import java.util.List;
 // --- JavaFX Imports ---
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -25,28 +26,29 @@ public class AnalysisView extends VBox {
     private List<Transaction> transactionData;
 
     public AnalysisView() {
-        setSpacing(10);
+        
+        setSpacing(15);
+        setPadding(new Insets(20));
 
-        // 1. Instantiate the UI Controls
+        // Init the UI Controls
         rowDimensionBox = new ComboBox<>(FXCollections.observableArrayList(RowDimension.values()));
-        rowDimensionBox.setValue(RowDimension.CATEGORY); // Default selection
-
+        rowDimensionBox.setValue(RowDimension.CATEGORY);
         columnDimensionBox = new ComboBox<>(FXCollections.observableArrayList(ColumnDimension.values()));
-        columnDimensionBox.setValue(ColumnDimension.YEAR); // Default selection
+        columnDimensionBox.setValue(ColumnDimension.YEAR);
 
         analysisTableView = new TableView<>();
 
-        // 2. Setup Event Listeners to recalculate when controls change
+        // Setup Event Listeners to recalculate when controls change
         rowDimensionBox.setOnAction(e -> refreshAnalysisList());
         columnDimensionBox.setOnAction(e -> refreshAnalysisList());
 
-        // 3. Build Control Bar
+        // Build Control Bar
         HBox controlBar = new HBox(10, 
             new Label("Zeilen:"), rowDimensionBox, 
             new Label("Spalten:"), columnDimensionBox
         );
 
-        // 4. Add components to this VBox container
+        // Add components to this VBox container
         this.getChildren().addAll(controlBar, analysisTableView);
     }
 
@@ -63,16 +65,17 @@ public class AnalysisView extends VBox {
     }
 
     public void updateAnalysisTable(List<Transaction> transactions) {
+        
         RowDimension selectedRowDim = rowDimensionBox.getValue();
         ColumnDimension selectedColDim = columnDimensionBox.getValue();
 
         // Safety fallback if no dimension selected yet
         if (selectedRowDim == null || selectedColDim == null) return;
 
-        // 1. Calculate Aggregated Data
+        // Calculate Aggregated Data
         AggregationResult result = AnalysisEngine.aggregate(transactions, selectedRowDim, selectedColDim);
 
-        // 2. Clear Existing Columns
+        // Clear Existing Columns
         analysisTableView.getColumns().clear();
 
         // 3. Column #1: Row Header (e.g., Subcategory Name)
