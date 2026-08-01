@@ -1,18 +1,23 @@
 package com.financeapp;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 // --- JavaFX Imports ---
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell; // <--- WAS MISSING
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback; // <--- WAS MISSING
 
 import com.financeapp.AnalysisEngine.AggregationResult;
 import com.financeapp.AnalysisEngine.ColumnDimension;
@@ -94,7 +99,6 @@ public class AnalysisView extends VBox {
             // Single Subcategory Column
             TableColumn<PivotRow, String> subcatCol = new TableColumn<>("Subkategorie");
             subcatCol.setCellValueFactory(cell -> {
-                // Fallback to rowHeader if subcategoryName isn't explicitly set
                 String label = cell.getValue().getSubcategoryName() != null
                         ? cell.getValue().getSubcategoryName()
                         : cell.getValue().getRowHeader();
@@ -105,22 +109,37 @@ public class AnalysisView extends VBox {
 
         // 4. Dynamic Period Columns (Years / Months)
         for (String colKey : result.columnKeys()) {
-            TableColumn<PivotRow, String> dynamicCol = new TableColumn<>(colKey);
-            dynamicCol.setCellValueFactory(cell -> {
-                BigDecimal amount = cell.getValue().getValue(colKey);
-                return new ReadOnlyStringWrapper(String.format("%.2f €", amount));
-            });
+            TableColumn<PivotRow, BigDecimal> dynamicCol = new TableColumn<>(colKey);
+            dynamicCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue().getValue(colKey)));
+            dynamicCol.setCellFactory(createGermanCurrencyCellFactory());
+
             analysisTableView.getColumns().add(dynamicCol);
         }
 
         // 5. Total Column
-        TableColumn<PivotRow, String> totalCol = new TableColumn<>("Gesamt");
-        totalCol.setCellValueFactory(
-                cell -> new ReadOnlyStringWrapper(String.format("%.2f €", cell.getValue().getRowTotal())));
+        TableColumn<PivotRow, BigDecimal> totalCol = new TableColumn<>("Gesamt");
+        totalCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue().getRowTotal()));
+        totalCol.setCellFactory(createGermanCurrencyCellFactory());
+
         analysisTableView.getColumns().add(totalCol);
 
         // 6. Populate Table
         analysisTableView.setItems(FXCollections.observableArrayList(result.rows()));
     }
 
+    private Callback<TableColumn<PivotRow, BigDecimal>, TableCell<PivotRow, BigDecimal>> createGermanCurrencyCellFactory() {
+        return column -> new TableCell<PivotRow, BigDecimal>() {
+            private final NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+
+            @Override
+            protected void updateItem(BigDecimal item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(germanFormat.format(item));
+                }
+            }
+        };
+    }
 }
