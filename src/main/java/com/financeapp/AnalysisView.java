@@ -79,28 +79,24 @@ public class AnalysisView extends VBox {
             case CATEGORY -> {
                 TableColumn<PivotRow, String> catCol = new TableColumn<>("Kategorie");
                 catCol.setCellValueFactory(cell -> 
-                    new ReadOnlyStringWrapper(cell.getValue().getCategoryName() != null 
-                        ? cell.getValue().getCategoryName() 
-                        : cell.getValue().getRowHeader()));
+                    new ReadOnlyStringWrapper(cell.getValue().getCategoryName()));
                 analysisTableView.getColumns().add(catCol);
             }
             case CATEGORY_AND_SUBCATEGORY -> {
                 TableColumn<PivotRow, String> catCol = new TableColumn<>("Kategorie");
-                catCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getCategoryName()));
+                catCol.setCellValueFactory(cell -> 
+                    new ReadOnlyStringWrapper(cell.getValue().getCategoryName()));
                 analysisTableView.getColumns().add(catCol);
 
                 TableColumn<PivotRow, String> subcatCol = new TableColumn<>("Subkategorie");
-                subcatCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getSubcategoryName()));
+                subcatCol.setCellValueFactory(cell -> 
+                    new ReadOnlyStringWrapper(cell.getValue().getSubcategoryName()));
                 analysisTableView.getColumns().add(subcatCol);
             }
             case SUBCATEGORY -> {
                 TableColumn<PivotRow, String> subcatCol = new TableColumn<>("Subkategorie");
-                subcatCol.setCellValueFactory(cell -> {
-                    String label = cell.getValue().getSubcategoryName() != null
-                            ? cell.getValue().getSubcategoryName()
-                            : cell.getValue().getRowHeader();
-                    return new ReadOnlyStringWrapper(label);
-                });
+                subcatCol.setCellValueFactory(cell -> 
+                    new ReadOnlyStringWrapper(cell.getValue().getSubcategoryName()));
                 analysisTableView.getColumns().add(subcatCol);
             }
         }

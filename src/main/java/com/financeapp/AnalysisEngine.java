@@ -10,9 +10,9 @@ import java.util.TreeSet;
 public class AnalysisEngine {
 
     public enum RowDimension {
-        CATEGORY("Nur Kategorie"),
+        CATEGORY("Kategorie"),
         CATEGORY_AND_SUBCATEGORY("Kategorie & Subkategorie"),
-        SUBCATEGORY("Nur Subkategorie");
+        SUBCATEGORY("Subkategorie");
 
         private final String label;
 
