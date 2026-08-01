@@ -26,7 +26,7 @@ public class AnalysisView extends VBox {
     private List<Transaction> transactionData;
 
     public AnalysisView() {
-        
+
         setSpacing(15);
         setPadding(new Insets(20));
 
@@ -43,10 +43,9 @@ public class AnalysisView extends VBox {
         columnDimensionBox.setOnAction(e -> refreshAnalysisList());
 
         // Build Control Bar
-        HBox controlBar = new HBox(10, 
-            new Label("Zeilen:"), rowDimensionBox, 
-            new Label("Spalten:"), columnDimensionBox
-        );
+        HBox controlBar = new HBox(10,
+                new Label("Zeilen:"), rowDimensionBox,
+                new Label("Spalten:"), columnDimensionBox);
 
         // Add components to this VBox container
         this.getChildren().addAll(controlBar, analysisTableView);
@@ -65,12 +64,13 @@ public class AnalysisView extends VBox {
     }
 
     public void updateAnalysisTable(List<Transaction> transactions) {
-        
+
         RowDimension selectedRowDim = rowDimensionBox.getValue();
         ColumnDimension selectedColDim = columnDimensionBox.getValue();
 
         // Safety fallback if no dimension selected yet
-        if (selectedRowDim == null || selectedColDim == null) return;
+        if (selectedRowDim == null || selectedColDim == null)
+            return;
 
         // Calculate Aggregated Data
         AggregationResult result = AnalysisEngine.aggregate(transactions, selectedRowDim, selectedColDim);
@@ -78,12 +78,32 @@ public class AnalysisView extends VBox {
         // Clear Existing Columns
         analysisTableView.getColumns().clear();
 
-        // 3. Column #1: Row Header (e.g., Subcategory Name)
-        TableColumn<PivotRow, String> rowHeaderCol = new TableColumn<>(selectedRowDim.toString());
-        rowHeaderCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getRowHeader()));
-        analysisTableView.getColumns().add(rowHeaderCol);
+        // 3. Row Header Columns (1 or 2 depending on selected dimension)
+        if (selectedRowDim == RowDimension.CATEGORY) {
+            // Category Column
+            TableColumn<PivotRow, String> catCol = new TableColumn<>("Kategorie");
+            catCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getCategoryName()));
+            analysisTableView.getColumns().add(catCol);
 
-        // 4. Dynamic Columns (e.g., 2024, 2025, 2026)
+            // Subcategory Column
+            TableColumn<PivotRow, String> subcatCol = new TableColumn<>("Subkategorie");
+            subcatCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getSubcategoryName()));
+            analysisTableView.getColumns().add(subcatCol);
+
+        } else if (selectedRowDim == RowDimension.SUBCATEGORY) {
+            // Single Subcategory Column
+            TableColumn<PivotRow, String> subcatCol = new TableColumn<>("Subkategorie");
+            subcatCol.setCellValueFactory(cell -> {
+                // Fallback to rowHeader if subcategoryName isn't explicitly set
+                String label = cell.getValue().getSubcategoryName() != null
+                        ? cell.getValue().getSubcategoryName()
+                        : cell.getValue().getRowHeader();
+                return new ReadOnlyStringWrapper(label);
+            });
+            analysisTableView.getColumns().add(subcatCol);
+        }
+
+        // 4. Dynamic Period Columns (Years / Months)
         for (String colKey : result.columnKeys()) {
             TableColumn<PivotRow, String> dynamicCol = new TableColumn<>(colKey);
             dynamicCol.setCellValueFactory(cell -> {
@@ -93,13 +113,14 @@ public class AnalysisView extends VBox {
             analysisTableView.getColumns().add(dynamicCol);
         }
 
-        // 5. Final Column: Row Total Sum
+        // 5. Total Column
         TableColumn<PivotRow, String> totalCol = new TableColumn<>("Gesamt");
         totalCol.setCellValueFactory(
                 cell -> new ReadOnlyStringWrapper(String.format("%.2f €", cell.getValue().getRowTotal())));
         analysisTableView.getColumns().add(totalCol);
 
-        // 6. Set Items
+        // 6. Populate Table
         analysisTableView.setItems(FXCollections.observableArrayList(result.rows()));
     }
+
 }

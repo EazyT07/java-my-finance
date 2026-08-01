@@ -27,20 +27,24 @@ public class AnalysisEngine {
         Set<String> dynamicColumnKeys = new TreeSet<>();
 
         for (Transaction t : transactions) {
-            // 1. Determine Row Key (e.g. Subcategory Name)
-            String rowKey = extractRowKey(t, rowDim);
 
-            // 2. Determine Column Key (e.g. "2024" or "Jan 2025" or "Total")
+            String catName = t.getCategoryName();
+            String subcatName = t.getSubcategoryName();
+
+            // Determine Unique Row Key (e.g. Subcategory Name)
+            String rowKey = (rowDim == RowDimension.CATEGORY)
+                    ? catName + " - " + subcatName
+                    : (subcatName != null ? subcatName : "Ohne Subkategorie");
+
+            // Determine and add Column Key
             String colKey = extractColumnKey(t, colDim);
-
-            // Track unique columns
             if (colDim.equals(ColumnDimension.YEAR) || colDim.equals(ColumnDimension.MONTH)) {
                 dynamicColumnKeys.add(colKey);
             }
 
-            // 3. Populate PivotRow
-            PivotRow row = rowMap.computeIfAbsent(rowKey, PivotRow::new);
-            row.addValue(colKey, t.getAmount());
+            // Construct PivotRow with BOTH category & subcategory names explicitly
+            PivotRow row = rowMap.computeIfAbsent(rowKey, k -> new PivotRow(catName, subcatName));
+            row.addAmount(colKey, t.getAmount());
         }
 
         return new AggregationResult(new ArrayList<>(rowMap.values()), new ArrayList<>(dynamicColumnKeys));
