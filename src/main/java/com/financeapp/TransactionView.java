@@ -261,7 +261,7 @@ public class TransactionView extends VBox {
         int importedCount = 0;
         int errorCount = 0;
 
-        DateTimeFormatter germanFormatter = DateTimeFormatter.ofPattern("dd.MM.yy");
+        DateTimeFormatter germanFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
         try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
             String line;

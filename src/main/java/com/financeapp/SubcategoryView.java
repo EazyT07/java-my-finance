@@ -15,6 +15,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class SubcategoryView extends VBox {
@@ -37,14 +38,18 @@ public class SubcategoryView extends VBox {
         // ----------------------
         subcategoryData = FXCollections.observableArrayList();
         subcategoryTableView = new TableView<>(subcategoryData);
+        VBox.setVgrow(subcategoryTableView, Priority.ALWAYS);
+        subcategoryTableView.setMaxHeight(Double.MAX_VALUE);
         subcategoryTableView.setPrefHeight(250);
         // Name
         TableColumn<Subcategory, String> nameColumn = new TableColumn<>("Unterkategorie");
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameColumn.setPrefWidth(140);
         subcategoryTableView.getColumns().add(nameColumn);
         // Category Name
         TableColumn<Subcategory, String> categoryColumn = new TableColumn<>("Kategorie");
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("categoryName"));
+        categoryColumn.setPrefWidth(140);
         subcategoryTableView.getColumns().add(categoryColumn);
 
         // Buttons

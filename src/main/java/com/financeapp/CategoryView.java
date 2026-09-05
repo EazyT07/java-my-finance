@@ -14,6 +14,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class CategoryView extends VBox {
@@ -23,6 +24,7 @@ public class CategoryView extends VBox {
     private final TextField inputField;
 
     public CategoryView() {
+
         setSpacing(15);
         setPadding(new Insets(20));
 
@@ -43,7 +45,8 @@ public class CategoryView extends VBox {
         // Category List
         categoryData = FXCollections.observableArrayList();
         categoryListView = new ListView<>(categoryData);
-        categoryListView.setPrefHeight(250);
+        VBox.setVgrow(categoryListView, Priority.ALWAYS);
+        categoryListView.setMaxHeight(Double.MAX_VALUE);
 
         // Action Buttons
         Button btnEdit = new Button("Ändern");
