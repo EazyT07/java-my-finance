@@ -43,6 +43,7 @@ public class TransactionView extends VBox {
     // Balance Info Labels
     private final Label labelOpenBalance;
     private final Label labelCloseBalance;
+    private final Label labelSum;
 
     public TransactionView() {
 
@@ -102,9 +103,11 @@ public class TransactionView extends VBox {
         // Balance Info Panel
         labelOpenBalance = new Label("0,00 €");
         labelCloseBalance = new Label("0,00 €");
+        labelSum = new Label("0,00 €");
         HBox balanceBox = new HBox(20,
                 new Label("Anfangssaldo:"), labelOpenBalance,
-                new Label("Endsaldo:"), labelCloseBalance);
+                new Label("Endsaldo:"), labelCloseBalance,
+                new Label("Summe:"), labelSum);
 
         // Transaction Table
         // -------------------
@@ -198,8 +201,23 @@ public class TransactionView extends VBox {
 
         // Calculate Balances (Account & Date From dependent)
         calculateBalances(selectedAccount, dateFrom, dateTo);
+        calculateSum();
     }
 
+    private void calculateSum() {
+
+        BigDecimal sum = new BigDecimal("0.00");
+
+        for (Transaction t : transactionData) {
+            BigDecimal amountValue = "INC".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
+            sum = sum.add(amountValue);
+        }
+
+        // Format and display
+        NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+        labelSum.setText(germanFormat.format(sum));
+    }
+    
     private void calculateBalances(Account account, LocalDate dateFrom, LocalDate dateTo) {
         if (account == null) {
             labelOpenBalance.setText("-");

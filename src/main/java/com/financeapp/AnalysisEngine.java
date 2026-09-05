@@ -1,5 +1,6 @@
 package com.financeapp;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -79,7 +80,8 @@ public class AnalysisEngine {
             dynamicColumnKeys.add(colKey);
 
             // Accumulate transaction amount into the row
-            row.addAmount(colKey, t.getAmount());
+            BigDecimal amountValue = "EXP".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
+            row.addAmount(colKey, amountValue);
         }
 
         return new AggregationResult(new ArrayList<>(rowMap.values()), new ArrayList<>(dynamicColumnKeys));
