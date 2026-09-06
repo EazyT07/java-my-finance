@@ -43,6 +43,9 @@ public class AnalysisEngine {
         }
     }
 
+    public record AggregationResult(List<PivotRow> rows, List<String> columnKeys) {
+    }
+
     public static AggregationResult aggregate(
             List<Transaction> transactions,
             RowDimension rowDim,
@@ -80,11 +83,25 @@ public class AnalysisEngine {
             dynamicColumnKeys.add(colKey);
 
             // Accumulate transaction amount into the row
-            BigDecimal amountValue = "EXP".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
+            BigDecimal amountValue = "INC".equalsIgnoreCase(t.getType()) ? t.getAmount() : t.getAmount().negate();
             row.addAmount(colKey, amountValue);
+
         }
 
-        return new AggregationResult(new ArrayList<>(rowMap.values()), new ArrayList<>(dynamicColumnKeys));
+        PivotRow grandTotalRow = new PivotRow("Gesamt", null);
+
+        // Sum up column values across all rows
+        for (PivotRow row : rowMap.values()) {
+            for (String colKey : dynamicColumnKeys) {
+                BigDecimal val = row.getValue(colKey);
+                grandTotalRow.addAmount(colKey, val);
+            }
+        }
+
+        List<PivotRow> finalRows = new ArrayList<>(rowMap.values());
+        finalRows.add(grandTotalRow);
+
+        return new AggregationResult(finalRows, new ArrayList<>(dynamicColumnKeys));
     }
 
     private static String extractColumnKey(Transaction t, ColumnDimension dim) {
@@ -94,6 +111,4 @@ public class AnalysisEngine {
         };
     }
 
-    public record AggregationResult(List<PivotRow> rows, List<String> columnKeys) {
-    }
 }

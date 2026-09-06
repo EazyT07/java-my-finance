@@ -15,6 +15,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
@@ -40,6 +41,9 @@ public class AnalysisView extends VBox {
         columnDimensionBox.setValue(ColumnDimension.YEAR);
 
         analysisTableView = new TableView<>();
+          // Set the TableView to grow vertically
+        VBox.setVgrow(analysisTableView, Priority.ALWAYS);
+        analysisTableView.setMaxHeight(Double.MAX_VALUE);
 
         rowDimensionBox.setOnAction(e -> refreshAnalysisList());
         columnDimensionBox.setOnAction(e -> refreshAnalysisList());
@@ -105,7 +109,7 @@ public class AnalysisView extends VBox {
         for (String colKey : result.columnKeys()) {
             TableColumn<PivotRow, BigDecimal> dynamicCol = new TableColumn<>(colKey);
             dynamicCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue().getValue(colKey)));
-            dynamicCol.setCellFactory(createGermanCurrencyCellFactory());
+            dynamicCol.setCellFactory(createGermanCurrencyCellFactory(false));
 
             analysisTableView.getColumns().add(dynamicCol);
         }
@@ -113,26 +117,43 @@ public class AnalysisView extends VBox {
         // Add overall Total column
         TableColumn<PivotRow, BigDecimal> totalCol = new TableColumn<>("Gesamt");
         totalCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue().getRowTotal()));
-        totalCol.setCellFactory(createGermanCurrencyCellFactory());
+        totalCol.setCellFactory(createGermanCurrencyCellFactory(true));
 
         analysisTableView.getColumns().add(totalCol);
 
         analysisTableView.setItems(FXCollections.observableArrayList(result.rows()));
     }
 
-    private Callback<TableColumn<PivotRow, BigDecimal>, TableCell<PivotRow, BigDecimal>> createGermanCurrencyCellFactory() {
-        return column -> new TableCell<PivotRow, BigDecimal>() {
-            private final NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+    private Callback<TableColumn<PivotRow, BigDecimal>, TableCell<PivotRow, BigDecimal>> createGermanCurrencyCellFactory(boolean isTotalColumn) {
+    return column -> new TableCell<PivotRow, BigDecimal>() {
+        private final NumberFormat germanFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
-            @Override
-            protected void updateItem(BigDecimal item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
+        @Override
+        protected void updateItem(BigDecimal item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setText(null);
+                setStyle("");
+            } else {
+                setText(germanFormat.format(item));
+
+                // Check if the current row is the "Gesamt" summary row
+                PivotRow row = getTableRow() != null ? getTableRow().getItem() : null;
+                boolean isTotalRow = row != null && (
+                    "Gesamt".equalsIgnoreCase(row.getCategoryName()) || 
+                    "Gesamt".equalsIgnoreCase(row.getSubcategoryName())
+                );
+
+                // Bold if it's the Total Column OR the Total Row
+                if (isTotalColumn || isTotalRow) {
+                    setStyle("-fx-font-weight: bold;");
                 } else {
-                    setText(germanFormat.format(item));
+                    setStyle("");
                 }
             }
         };
-    }
+    };
+}
+
 }
