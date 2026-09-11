@@ -2,6 +2,7 @@ package com.financeapp;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -11,6 +12,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -63,6 +65,15 @@ public class Main extends Application {
         Scene scene = new Scene(root, 1000, 750);
         String css = getClass().getResource("/styles.css").toExternalForm();
         scene.getStylesheets().add(css);
+        // Set the Icon
+        try {
+            Image icon = new Image(Objects.requireNonNull(
+                getClass().getResourceAsStream("/icons/app-icon.png")
+            ));
+            primaryStage.getIcons().add(icon);
+        } catch (Exception e) {
+            System.err.println("Could not load application icon: " + e.getMessage());
+        }
         primaryStage.setTitle("Meine Finanzen");
         primaryStage.setScene(scene);
         primaryStage.show();
