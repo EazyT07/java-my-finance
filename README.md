@@ -59,6 +59,7 @@
     mvn clean package
 
 2. **Generate the native .dmg installer using jpackage:**
+
     jpackage \
         --type dmg \
         --name "MyFinance" \
@@ -75,9 +76,10 @@
     Convert your app-icon.png to icon.ico using an online converter or image editing software, and place it in the project root.
 
 2. **Generate executable package using jpackage (PowerShell / Command Prompt):**
+
     jpackage `
         --type exe `
-        --name "Meine Finanzen" `
+        --name "MyFinance" `
         --app-version "1.0.0" `
         --vendor "FinanceApp" `
         --icon icon.ico `
