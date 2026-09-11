@@ -14,8 +14,8 @@
   * **Custom Year Filter:** Easily restrict analysis ranges (e.g., last 5 years) or view all historical data.
   * **Automated Totals:** Dynamically computed row totals and column grand total summary rows with visual bold styling.
 * **💡 Net Spending Accounting Logic:**
-  * **Expenses ($+$):** Displayed as negative values representing total category spending.
-  * **Income ($-$)**: Displayed as positive values 
+  * **Expenses ($-$):** Displayed as negative values representing total category spending.
+  * **Income ($+$)**: Displayed as positive values 
   * **Net Balance:** Summary row instantly shows if your period ended in a surplus.
 * **🖥️ Native macOS & Desktop Polish:** High-DPI icons, customized table styling with German currency formatting (`1.234,56 €`), and single-click native executable packaging (`.dmg`).
 
@@ -70,4 +70,20 @@
         --main-class com.financeapp.Launcher \
         --dest dist/
 
+## 🪟 Windows (.exe / .msi)
+1. **Prepare a Windows Icon (.ico):**
+    Convert your app-icon.png to icon.ico using an online converter or image editing software, and place it in the project root.
 
+2. **Generate executable package using jpackage (PowerShell / Command Prompt):**
+    jpackage `
+        --type exe `
+        --name "Meine Finanzen" `
+        --app-version "1.0.0" `
+        --vendor "FinanceApp" `
+        --icon icon.ico `
+        --input target/ `
+        --main-jar MyFinance-1.0-SNAPSHOT.jar `
+        --main-class com.financeapp.Launcher `
+        --win-shortcut `
+        --win-menu `
+        --dest dist/
